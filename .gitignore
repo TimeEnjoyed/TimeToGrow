@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+*.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+
+# Ignore the default SQLite database.
+database/*.db
+database/*.db-shm
+database/*.db-wal
+
+
+# Pyre type checker
+.pyre/
+
+.idea/
+
+example-inheritance.py

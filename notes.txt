@@ -1,0 +1,38 @@
+===================================================================
+BASIC EXAMPLE
+- USER BUYS SEEDS WITH POINTS (50pts) (twitchapi <-websocket-> twitchio)
+- (twitchio <-built into each other-> starlette server)
+- Creates user in table in database. (sqlite - asynchronous via wrapper https://github.com/Rapptz/asqlite)
+- Questions: attributes of user?
+- Grab seeds.jpg and display on template.
+
+
+
+===================================================================
+Three parts
+1) This should work from command line- Growth Plant Program (state)
+
+2) The Server Problem - connect user to program
+twitchAPI - connects to events such as: redemption points, follows, subs
+
+3) How to display via HTML
+ -prob need js y/n
+
+
+starlette receives the request into a function.
+def receive_redemption(?)
+    # create user in database
+    # returns user object
+
+Process/thinking aloud:
+- redeem event --> request ( username, type of redemption) POST.
+
+
+- Server Side Event
+
+
+
+User on Twitch Redeems > TwitchIO Recieves Redemption >
+TwitchIO does whatever you want with API and puts data into queue >
+ Starlette receives data from queue >
+ Starlette sends an event to all subscribed listeners

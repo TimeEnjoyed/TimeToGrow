@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS test (
+    id BIGINT PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+    rowid INTEGER PRIMARY KEY,
+    content TEXT
+);
