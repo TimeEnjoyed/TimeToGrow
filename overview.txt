@@ -1,0 +1,14 @@
+Overview : Create an overlay like a greenhouse/nursery that chat can interact with.  They will be able plant a seed when they arrive at chat.  This will be limited to 25 plants and will be redeem channel points.  Their twitch name will show above it so that they know where their plant is.  In order to grow their plant they will need to water using a chat command within a set time frame.  If they miss some waters their plant will suffer and go backwards on progress with a chance of dying and eventually being removed so someone else can plant.
+
+Must be a follower to take part.
+
+GOALS:
+Set up a bot that interacts with twitch API
+Set up the bot to receive oauth from streamer to access channel points
+Respond to commands in chat from each of the users to water their plants
+    Will check if user has a plant
+    If user does not have a plant the bot will just ignore the command
+Have overlay be able to adapt/change with each users commands/lack thereof (ie grow/wilt)
+Plants displayed with twitch username above it - auto stacking (maybe?) when there are a bunch
+Have ability to add channel points to trigger certain events when bot is active - ie sabotage a specific user
+When specific time or chats reached an event is triggered - ie sun comes out for a minute (maybe)
