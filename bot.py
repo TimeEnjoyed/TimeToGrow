@@ -43,8 +43,8 @@ load_dotenv('.env')
 token = os.environ['ACCESS_TOKEN']
 
 epoch = datetime.datetime.utcfromtimestamp(0)
-bot_name = "TheTimeBot"
-user_channel = 'timeenjoyed'
+bot_name = "timetogrow_"
+user_channel = os.environ['TEST_CHANNEL']
 
 
 class Bot(commands.Bot):
