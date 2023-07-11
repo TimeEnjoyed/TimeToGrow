@@ -28,7 +28,8 @@ import asqlite
 import uvicorn
 
 from api import Server
-from bot import Bot
+from bot import Bot, token, CLIENT_ID
+
 
 
 # main loop: asyncio event loop
@@ -42,11 +43,17 @@ from bot import Bot
 async def main() -> None:
     async with asqlite.create_pool('database/database.db') as pool:  # a statement called Context Manager (CM)
         await setup_database(pool)
+
         bot: Bot = Bot(pool=pool)  # instantiates TwitchIO bot
         app: Server = Server(bot=bot, pool=pool)  # instantiates Starlette server, and connects to TwitchIO bot
         bot.server = app  # the bots attribute 'self.server' is now the 'app'
+
+        # topics = [pubsub.channel_points(token)[CLIENT_ID]]
+
         config: uvicorn.Config = uvicorn.Config(app, port=8000)
         server: uvicorn.Server = uvicorn.Server(config)
+
+        # start the keep alives
         asyncio.create_task(bot.start())
         await server.serve()
 

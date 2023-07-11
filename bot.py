@@ -27,7 +27,7 @@ import os
 
 import twitchio
 from dotenv import load_dotenv
-from twitchio.ext import commands
+from twitchio.ext import commands, pubsub
 
 # main loop: asyncio event loop
 # i need to be able to run two tasks:
@@ -40,11 +40,13 @@ from twitchio.ext import commands
 load_dotenv('.env')
 
 # Assigns secret access token to "token".
-token = os.environ['ACCESS_TOKEN']
+token = os.environ['ACCESS_TOKEN']  # timetogrow_ permissions, generated with tokengenerator
+CLIENT_ID = os.environ['CLIENT_ID']  # timetogrow_ app
+CLIENT_SECRET = os.environ['CLIENT_SECRET']  # timetogrow_ app
 
 epoch = datetime.datetime.utcfromtimestamp(0)
 bot_name = "timetogrow_"
-user_channel = os.environ['TEST_CHANNEL'] # add your channel name to .env file for testing purposes
+user_channel = os.environ['TEST_CHANNEL']  # add your channel name to .env file for testing purposes
 
 
 class Bot(commands.Bot):
@@ -56,6 +58,7 @@ class Bot(commands.Bot):
         super().__init__(token, prefix='!', initial_channels=[user_channel])
         self.server = None  # adds the app to the bot
         self.pool = pool
+        self.pubsub: pubsub.PubSubPool = pubsub.PubSubPool(self)  # thanks Mysty
 
 
     async def event_ready(self):
@@ -74,3 +77,10 @@ class Bot(commands.Bot):
             # anytime we deal with database, us $1 format
             await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
 
+
+    async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage):
+        print(f"REWARD: {event.reward.title} REDEEM BY: {event.user.name}")
+        await self.server.queue.put({'operation': 'step'})
+
+    ## GAME LOGIC BELOW ##
+    ## sends data {'operation': 'step'} ##

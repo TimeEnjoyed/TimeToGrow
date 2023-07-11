@@ -32,6 +32,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.routing import Route, Mount
 from starlette.staticfiles import StaticFiles
+from bot import CLIENT_ID, CLIENT_SECRET
 
 
 class Server(Starlette):
@@ -93,14 +94,14 @@ class Server(Starlette):
         params = request.query_params
         code: str = params['code']
 
-        client_id: str = ''
-        client_secret: str = ''
+        client_id: str = ''  # client_id of app
+        client_secret: str = ''  # client_secret of app
         grant: str = 'authorization_code'
         redirect: str = 'http://localhost:8000/oauth'
 
         url: str = f'https://id.twitch.tv/oauth2/token?' \
-                   f'client_id={client_id}&' \
-                   f'client_secret={client_secret}&' \
+                   f'client_id={CLIENT_ID}&' \
+                   f'client_secret={CLIENT_SECRET}&' \
                    f'code={code}&' \
                    f'grant_type={grant}&' \
                    f'redirect_uri={redirect}'
@@ -111,5 +112,8 @@ class Server(Starlette):
                     return Response(status_code=500)
 
                 data: dict[str, Any] = await resp.json()
+
+                token: str = data['access_token']
+                refresh_token: str = data['refresh_token']
 
         return JSONResponse({'token': data['access_token'], 'refresh': data['refresh_token']})

@@ -36,3 +36,20 @@ User on Twitch Redeems > TwitchIO Recieves Redemption >
 TwitchIO does whatever you want with API and puts data into queue >
  Starlette receives data from queue >
  Starlette sends an event to all subscribed listeners
+
+===============================
+SABOTAGE (redemption):
+- anyone can sabotage
+- non-followers: return "you need to be a follower", reject/refund
+- follower
+- bot runs sabotage() -> auto completes redemption
+
+PLANT+WATER SEED (redemption):
+- anyone can plant seed
+- non-followers: return "you need to be a follower", reject/refund
+- follower
+- bot runs sabotage() -> auto completes redemption
+
+WATER (command):
+- non-follower: bot passes
+- follower: bot sends info to water()
