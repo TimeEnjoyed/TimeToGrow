@@ -28,7 +28,8 @@ from sse_starlette import EventSourceResponse
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
-from starlette.routing import Route
+from starlette.routing import Route, Mount
+from starlette.staticfiles import StaticFiles
 
 
 class Server(Starlette):
@@ -39,7 +40,8 @@ class Server(Starlette):
                 # listen at endpoint. if we receive matching list of methods, we call the function
                 Route('/send', self.send_endpoint, methods=['POST']),
                 Route('/event', self.event_endpoint, methods=['GET']),
-                Route('/test', self.test_endpoint, methods=['GET'])
+                Route('/test', self.test_endpoint, methods=['GET']),
+                Mount('/', app=StaticFiles(directory='website/templates', html="base")) # Allows index.html to be launched through starlette
             ],
             on_startup=[self.on_ready]
         )

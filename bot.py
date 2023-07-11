@@ -44,7 +44,7 @@ token = os.environ['ACCESS_TOKEN']
 
 epoch = datetime.datetime.utcfromtimestamp(0)
 bot_name = "timetogrow_"
-user_channel = os.environ['TEST_CHANNEL']
+user_channel = os.environ['TEST_CHANNEL'] # add your channel name to .env file for testing purposes
 
 
 class Bot(commands.Bot):
