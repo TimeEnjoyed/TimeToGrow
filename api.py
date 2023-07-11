@@ -23,7 +23,9 @@ SOFTWARE."""
 
 import asyncio
 import json
+from typing import Any
 
+import aiohttp
 from sse_starlette import EventSourceResponse
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -38,10 +40,12 @@ class Server(Starlette):
         super().__init__(  # calls __init__ on Starlette
             routes=[
                 # listen at endpoint. if we receive matching list of methods, we call the function
+                Route('/oauth', self.oauth_endpoint, methods=['GET']),
                 Route('/send', self.send_endpoint, methods=['POST']),
                 Route('/event', self.event_endpoint, methods=['GET']),
                 Route('/test', self.test_endpoint, methods=['GET']),
-                Mount('/', app=StaticFiles(directory='website/templates', html="base")) # Allows index.html to be launched through starlette
+                Mount('/', app=StaticFiles(directory='website/templates', html="base")),  # Allows index.html to be launched through starlette
+
             ],
             on_startup=[self.on_ready]
         )
@@ -75,3 +79,37 @@ class Server(Starlette):
             data = await connection.fetchone("SELECT rowid, content from messages WHERE rowid=$1", 1)
             return JSONResponse(dict(data), status_code=200)
         # return JSONResponse({"connected_to": [c.name for c in self.bot.connected_channels]}, status_code=200)
+
+    async def oauth_endpoint(self, request: Request) -> Response:
+        """
+        Visit: https://dev.twitch.tv/console/apps/create
+        Set OAuth Redirect URLs as: http://localhost:8000/oauth
+        Choose a Category.
+        Create App.
+        Copy and Save ID and Secret.
+        Visit your connect url E.g what you set in HTML with your required scopes: <a href="https://id.twitch.tv/oauth2/authorize?[parameters]">Connect with Twitch</a>
+        For example: https://id.twitch.tv/oauth2/authorize?client_id=2hwtub5jvur3s1ww3ifb9047xnchpx&redirect_uri=http://localhost:8000/oauth&response_type=code&scope=chat:read
+        """
+        params = request.query_params
+        code: str = params['code']
+
+        client_id: str = ''
+        client_secret: str = ''
+        grant: str = 'authorization_code'
+        redirect: str = 'http://localhost:8000/oauth'
+
+        url: str = f'https://id.twitch.tv/oauth2/token?' \
+                   f'client_id={client_id}&' \
+                   f'client_secret={client_secret}&' \
+                   f'code={code}&' \
+                   f'grant_type={grant}&' \
+                   f'redirect_uri={redirect}'
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url) as resp:
+                if resp.status != 200:
+                    return Response(status_code=500)
+
+                data: dict[str, Any] = await resp.json()
+
+        return JSONResponse({'token': data['access_token'], 'refresh': data['refresh_token']})
