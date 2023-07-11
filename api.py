@@ -58,8 +58,11 @@ class Server(Starlette):
         print('Server is ready!')
 
     def dispatch(self, data: dict[Any, Any]) -> None:
+        asyncio.create_task(self._dispatch(data))
+
+    async def _dispatch(self, data: dict[Any, Any]) -> None:
         for queue in self._listeners.values():
-            queue.put_nowait(data)
+            await queue.put(data)
 
     async def event_endpoint(self, request: Request) -> EventSourceResponse:
         identifier: str = secrets.token_urlsafe(12)
