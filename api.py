@@ -23,6 +23,7 @@ SOFTWARE."""
 
 import asyncio
 import json
+import secrets
 from typing import Any
 
 import aiohttp
@@ -42,7 +43,6 @@ class Server(Starlette):
             routes=[
                 # listen at endpoint. if we receive matching list of methods, we call the function
                 Route('/oauth', self.oauth_endpoint, methods=['GET']),
-                Route('/send', self.send_endpoint, methods=['POST']),
                 Route('/event', self.event_endpoint, methods=['GET']),
                 Route('/test', self.test_endpoint, methods=['GET']),
                 Mount('/', app=StaticFiles(directory='website/templates', html="base")),  # Allows index.html to be launched through starlette
@@ -50,30 +50,37 @@ class Server(Starlette):
             ],
             on_startup=[self.on_ready]
         )
-        self.queue: asyncio.Queue = asyncio.Queue()
+        self._listeners: dict[str, asyncio.Queue] = {}
         self.bot = bot
         self.pool = pool
 
     async def on_ready(self) -> None:
         print('Server is ready!')
 
-    async def send_endpoint(self, request: Request) -> Response:
-        data = await request.json()
-        await self.queue.put(data)
-        return Response(status_code=200)
+    def dispatch(self, data: dict[Any, Any]) -> None:
+        for queue in self._listeners.values():
+            queue.put_nowait(data)
 
     async def event_endpoint(self, request: Request) -> EventSourceResponse:
-        return EventSourceResponse(self.process_event(request=request))
+        identifier: str = secrets.token_urlsafe(12)
+        self._listeners[identifier] = asyncio.Queue()
 
-    async def process_event(self, request: Request) -> None:
+        return EventSourceResponse(self.process_event(identifier=identifier, request=request))
+
+    async def process_event(self, identifier: str, request: Request) -> None:
+        queue: asyncio.Queue = self._listeners[identifier]
+
         while True:
             try:
-                data = await self.queue.get()
+                data = await queue.get()
                 yield json.dumps(data)
             except asyncio.CancelledError:
                 break
+
             if await request.is_disconnected():
                 break
+
+        del self._listeners[identifier]
 
     async def test_endpoint(self, request: Request) -> Response:
         async with self.pool.acquire() as connection:

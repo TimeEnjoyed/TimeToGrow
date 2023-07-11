@@ -60,23 +60,20 @@ class Bot(commands.Bot):
         self.pool = pool
         self.pubsub: pubsub.PubSubPool = pubsub.PubSubPool(self)  # thanks Mysty
 
-
     async def event_ready(self):
         # Is logged in and ready to use commands
         print(f'Logged in as | {self.nick}')
         print(f'User id is | {self.user_id}')
         print(self.server)
 
-
     async def event_message(self, message: twitchio.Message) -> None:
-        print(f'MESSAGE FROM: {message.author.name} - {message.content}')
+        self.server.dispatch(data={'message': message.content, 'user': message.author.name})
 
         # example of adding something to database:
         async with self.pool.acquire() as connection:
             # below format is sanitized inserts. (not f-string or .format)
             # anytime we deal with database, us $1 format
             await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
-
 
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage):
         print(f"REWARD: {event.reward.title} REDEEM BY: {event.user.name}")
