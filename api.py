@@ -148,4 +148,4 @@ class Server(Starlette):
                 set_key('.env', 'REFRESH_TOKEN', refresh_token)
 
 
-        return JSONResponse({'token': data['access_token'], 'refresh': data['refresh_token']})
+        return templates.TemplateResponse('index.html', {'request': request})
