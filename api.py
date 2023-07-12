@@ -27,14 +27,20 @@ import secrets
 from typing import Any
 
 import aiohttp
+from dotenv import dotenv_values, set_key
 from sse_starlette import EventSourceResponse
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.routing import Route, Mount
+from starlette.templating import Jinja2Templates
 from starlette.staticfiles import StaticFiles
 from bot import CLIENT_ID, CLIENT_SECRET
 
+
+
+
+templates = Jinja2Templates(directory='website/templates')
 
 class Server(Starlette):
 
@@ -45,11 +51,14 @@ class Server(Starlette):
                 Route('/oauth', self.oauth_endpoint, methods=['GET']),
                 Route('/event', self.event_endpoint, methods=['GET']),
                 Route('/test', self.test_endpoint, methods=['GET']),
-                Mount('/images', app=StaticFiles(directory='website/static/images'), name='images'),
-                Mount('/html', app=StaticFiles(directory='website/templates', html="base"))  # Allows index.html to be launched through starlette
+                Route('/', self.oauth),
+                Route('/overlay', self.overlay),
+                Mount('/images', StaticFiles(directory='website/static/images'), name='images'),
+                Mount('/html', StaticFiles(directory='website/templates'), name='html')  # Allows index.html to be launched through starlette
 
             ],
             on_startup=[self.on_ready]
+
         )
         self._listeners: dict[str, asyncio.Queue] = {}
         self.bot = bot
@@ -64,6 +73,12 @@ class Server(Starlette):
     async def _dispatch(self, data: dict[Any, Any]) -> None:
         for queue in self._listeners.values():
             await queue.put(data)
+
+    async def oauth(self, request):
+        return templates.TemplateResponse('oauth.html', {'request': request})
+
+    async def overlay(self, request):
+        return templates.TemplateResponse('index.html', {'request': request})
 
     async def event_endpoint(self, request: Request) -> EventSourceResponse:
         identifier: str = secrets.token_urlsafe(12)
@@ -105,8 +120,8 @@ class Server(Starlette):
         params = request.query_params
         code: str = params['code']
 
-        client_id: str = ''  # client_id of app
-        client_secret: str = ''  # client_secret of app
+        # client_id: str = CLIENT_ID  # client_id of app
+        # client_secret: str = CLIENT_SECRET  # client_secret of app
         grant: str = 'authorization_code'
         redirect: str = 'http://localhost:8000/oauth'
 
@@ -126,5 +141,11 @@ class Server(Starlette):
 
                 token: str = data['access_token']
                 refresh_token: str = data['refresh_token']
+
+
+                dotenv_values('.env')
+                set_key('.env', 'ACCESS_TOKEN', token)
+                set_key('.env', 'REFRESH_TOKEN', refresh_token)
+
 
         return JSONResponse({'token': data['access_token'], 'refresh': data['refresh_token']})
