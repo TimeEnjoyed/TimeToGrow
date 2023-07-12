@@ -45,7 +45,8 @@ class Server(Starlette):
                 Route('/oauth', self.oauth_endpoint, methods=['GET']),
                 Route('/event', self.event_endpoint, methods=['GET']),
                 Route('/test', self.test_endpoint, methods=['GET']),
-                Mount('/', app=StaticFiles(directory='website/templates', html="base")),  # Allows index.html to be launched through starlette
+                Mount('/images', app=StaticFiles(directory='website/static/images'), name='images'),
+                Mount('/html', app=StaticFiles(directory='website/templates', html="base"))  # Allows index.html to be launched through starlette
 
             ],
             on_startup=[self.on_ready]
