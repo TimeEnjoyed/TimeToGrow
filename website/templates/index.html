@@ -5,7 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Time to Grow</title>
 </head>
+
+<script>
+    const event = new EventSource("http://127.0.0.1:8000/event")
+
+    event.onmessage = function(event){
+        console.log("new data", event.data)
+    }
+
+
+
+</script>
+
 <body>
-    <img src="images/Hole.png" width="500">
+
+
+{% for plant in ground.items() %}
+{{ plant.name }}
+{{ plant.state }}
+{% endfor %}
+
+<div class="planter">
+        <div class="plant" id="1"></div>
+        <div class="plant" id="1"></div>
+        <div class="plant" id="1"></div>
+        <div class="plant" id="1"></div>
+        <div class="plant" id="1"></div>
+        <div class="plant" id="1"></div>
+
+    </div>
+
 </body>
 </html>

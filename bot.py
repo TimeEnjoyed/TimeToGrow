@@ -67,11 +67,15 @@ class Bot(commands.Bot):
         self.server: Server | None = None  # adds the app to the bot
         self.pool = pool
         self.pubsub: pubsub.PubSubPool = pubsub.PubSubPool(self)  # thanks Mysty
+        self.topics: list[pubsub.Topic] | None = None
+
 
     async def event_ready(self) -> None:
         # Is logged in and ready to use commands
         print(f"Logged in as | {self.nick}")
         print(f"User id is | {self.user_id}")
+        await self.pubsub.subscribe_topics(self.topics)
+
 
     async def event_message(self, message: twitchio.Message) -> None:
         assert self.server
@@ -88,8 +92,14 @@ class Bot(commands.Bot):
 
         reward: twitchio.CustomReward = event.reward
         user: twitchio.PartialUser = event.user
+        print(reward)
+        self.server.dispatch(data={"username": user})
 
         print(f"REWARD: {reward.title} REDEEM BY: {user.name}")
+        async with self.pool.acquire() as connection:
+            # below format is sanitized inserts. (not f-string or .format)
+            # anytime we deal with database, us $1 format
+            await connection.execute("INSERT INTO plants(user) VALUES($1)", user)
         # self.server.dispatch({"operation": "step"})
 
     ## GAME LOGIC BELOW ##

@@ -53,3 +53,56 @@ PLANT+WATER SEED (redemption):
 WATER (command):
 - non-follower: bot passes
 - follower: bot sends info to water()
+
+LOGIC in BACK:
+- database
+- { places:
+    {'place: 1, {'username': 'timeenjoyed', 'state': 3, 'wilt': false}},
+    {'place: 2, {'username': 'ambivalentbunnie', 'state': 2, 'wilt': true }},
+    {'place: 3, {'username': 'mystypy', 'state': 2, 'wilt': true}},
+    {'place: 4, {'username': 'kroden', 'state': 2, 'wilt': true }},
+    }
+
+<script>
+
+cont event = new EventSource("") = > json data
+
+def event
+
+</script>
+
+<html>
+<div id=1, style="bottom: 25px'>
+    <src img="seed.jpg">
+</div>
+</html>
+
+
+
+
+time: int =
+
+async def get_step(username):
+    - "check to see if username exists"
+
+    def check_wilt(time)
+    - "check to see if wilt"
+    - get time
+    - generate the state
+    return state
+
+async def dispatch
+
+
+
+
+
+
+
+
+
+
+LOGIC in FRONT = > channel
+- time => front
+- wilt => front
+- cylce =>

@@ -26,6 +26,7 @@ import json
 import secrets
 from typing import Any, AsyncGenerator
 
+import json
 import aiohttp
 import asqlite
 from dotenv import dotenv_values, set_key
@@ -52,13 +53,12 @@ class Server(Starlette):
                 # listen at endpoint. if we receive matching list of methods, we call the function
                 Route("/oauth", self.oauth_endpoint, methods=["GET"]),
                 Route("/event", self.event_endpoint, methods=["GET"]),
-                Route("/test", self.test_endpoint, methods=["GET"]),
-                Route("/", self.oauth),
-                Route("/overlay", self.overlay),
+                Route("/reward", self.reward_endpoint, methods=["GET"]),
+                Route("/", self.overlay),
+                Route("/login", self.login),
                 Mount("/images", StaticFiles(directory="website/static/images"), name="images"),
-                Mount(
-                    "/html", StaticFiles(directory="website/templates"), name="html"
-                ),  # Allows index.html to be launched through starlette
+                Mount("/html", StaticFiles(directory="website/templates"), name="html"),
+                # Allows index.html to be launched through starlette
             ],
             on_startup=[self.on_ready],
         )
@@ -71,18 +71,27 @@ class Server(Starlette):
     async def on_ready(self) -> None:
         print("Server is ready!")
 
+    async def login(self, request: Request):
+        return templates.TemplateResponse("oauth.html", {"request": request})
+
+    async def overlay(self, request: Request):
+        thing = await self.reward_endpoint(request)
+        dict_thing = json.loads(thing)
+
+        context = {
+            "request": request,
+            "dict_thing": dict_thing}
+
+        return templates.TemplateResponse("index.html", context)
+
+################[connects server to bot data]####################
     def dispatch(self, data: dict[Any, Any]) -> None:
         asyncio.create_task(self._dispatch(data))
 
     async def _dispatch(self, data: dict[Any, Any]) -> None:
         for queue in self._listeners.values():
             await queue.put(data)
-
-    async def oauth(self, request: Request):
-        return templates.TemplateResponse("oauth.html", {"request": request})
-
-    async def overlay(self, request: Request):
-        return templates.TemplateResponse("index.html", {"request": request})
+################################################################
 
     async def event_endpoint(self, request: Request) -> EventSourceResponse:
         identifier: str = secrets.token_urlsafe(12)
@@ -105,11 +114,20 @@ class Server(Starlette):
 
         del self._listeners[identifier]
 
-    async def test_endpoint(self, request: Request) -> Response:
+    async def reward_endpoint(self, request: Request):
         async with self.pool.acquire() as connection:
-            data = await connection.fetchone("SELECT rowid, content from messages WHERE rowid=$1", 1)
-            return JSONResponse(dict(data), status_code=200)
+            # TODO:  data = await connection.fetchone("SELECT rowid, username from plants WHERE rowid,)
+            # rowid = data['rowid']
+            # json_data = {
+            #     "rowid": rowid,
+            #     "content": content
+            # }
+            json_response = json.dumps(json_data)
+        return json_response
+
+            # return JSONResponse(dict(data), status_code=200)
         # return JSONResponse({"connected_to": [c.name for c in self.bot.connected_channels]}, status_code=200)
+
 
     async def oauth_endpoint(self, request: Request) -> Response:
         """
@@ -145,11 +163,11 @@ class Server(Starlette):
 
                 data: dict[str, Any] = await resp.json()
 
-                token: str = data["access_token"]
-                refresh_token: str = data["refresh_token"]
+                oauth_access_token: str = data["access_token"]
+                oauth_refresh_token: str = data["refresh_token"]
 
                 dotenv_values(".env")
-                set_key(".env", "ACCESS_TOKEN", token)
-                set_key(".env", "REFRESH_TOKEN", refresh_token)
+                set_key(".env", "OAUTH_ACCESS_TOKEN", oauth_access_token)
+                set_key(".env", "OAUTH_REFRESH_TOKEN", oauth_refresh_token)
 
         return templates.TemplateResponse("index.html", {"request": request})

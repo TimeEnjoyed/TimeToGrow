@@ -23,13 +23,15 @@ SOFTWARE.
 """
 
 import asyncio
+import os
 
 import asqlite
+from dotenv import load_dotenv
 import uvicorn
+from twitchio.ext import pubsub
 
 from api import Server
 from bot import Bot
-
 
 # main loop: asyncio event loop
 # i need to be able to run two tasks:
@@ -39,6 +41,8 @@ from bot import Bot
 
 # Opens .env file
 
+load_dotenv(".env")
+timeenjoyed_channel_id = 410885037
 
 async def main() -> None:
     async with asqlite.create_pool("database/database.db") as pool:  # a statement called Context Manager (CM)
@@ -46,9 +50,9 @@ async def main() -> None:
 
         bot: Bot = Bot(pool=pool)  # instantiates TwitchIO bot
         app: Server = Server(bot=bot, pool=pool)  # instantiates Starlette server, and connects to TwitchIO bot
-        bot.server = app  # the bots attribute 'self.server' is now the 'app'
+        bot.server = app  # the bots attribute 'self.server' is now the 'app
 
-        # topics = [pubsub.channel_points(token)[CLIENT_ID]]
+        bot.topics = [pubsub.channel_points(os.environ["OAUTH_ACCESS_TOKEN"])[timeenjoyed_channel_id]]
 
         config: uvicorn.Config = uvicorn.Config(app, port=8000)
         server: uvicorn.Server = uvicorn.Server(config)
