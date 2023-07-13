@@ -21,14 +21,20 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from __future__ import annotations
 
 import datetime
 import os
+from typing import TYPE_CHECKING
 
+import asqlite
 import twitchio
 from dotenv import load_dotenv
 from twitchio.ext import commands, pubsub
 
+
+if TYPE_CHECKING:
+    from api import Server
 
 # main loop: asyncio event loop
 # i need to be able to run two tasks:
@@ -41,33 +47,34 @@ from twitchio.ext import commands, pubsub
 load_dotenv(".env")
 
 # Assigns secret access token to "token".
-token = os.environ["ACCESS_TOKEN"]  # timetogrow_ permissions, generated with tokengenerator
-CLIENT_ID = os.environ["CLIENT_ID"]  # timetogrow_ app
-CLIENT_SECRET = os.environ["CLIENT_SECRET"]  # timetogrow_ app
+token: str = os.environ["ACCESS_TOKEN"]  # timetogrow_ permissions, generated with tokengenerator
+CLIENT_ID: str = os.environ["CLIENT_ID"]  # timetogrow_ app
+CLIENT_SECRET: str = os.environ["CLIENT_SECRET"]  # timetogrow_ app
 
-epoch = datetime.datetime.utcfromtimestamp(0)
-bot_name = "timetogrow_"
-user_channel = os.environ["TEST_CHANNEL"]  # add your channel name to .env file for testing purposes
+epoch: datetime.datetime = datetime.datetime.utcfromtimestamp(0)
+bot_name: str = "timetogrow_"
+user_channel: str = os.environ["TEST_CHANNEL"]  # add your channel name to .env file for testing purposes
 
 
 class Bot(commands.Bot):
-    def __init__(self, pool):
+    def __init__(self, pool: asqlite.Pool):
         # Initialize bot with access token, prefix, and a list of channels to join on boot.
         # prefix can be a callable, which returns a list of strings or a strings
         # initial_channels can also be callable
 
         super().__init__(token, prefix="!", initial_channels=[user_channel])
-        self.server = None  # adds the app to the bot
+
+        self.server: Server | None = None  # adds the app to the bot
         self.pool = pool
         self.pubsub: pubsub.PubSubPool = pubsub.PubSubPool(self)  # thanks Mysty
 
-    async def event_ready(self):
+    async def event_ready(self) -> None:
         # Is logged in and ready to use commands
         print(f"Logged in as | {self.nick}")
         print(f"User id is | {self.user_id}")
-        print(self.server)
 
     async def event_message(self, message: twitchio.Message) -> None:
+        assert self.server
         self.server.dispatch(data={"message": message.content, "user": message.author.name})
 
         # example of adding something to database:
@@ -76,9 +83,14 @@ class Bot(commands.Bot):
             # anytime we deal with database, us $1 format
             await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
 
-    async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage):
-        print(f"REWARD: {event.reward.title} REDEEM BY: {event.user.name}")
-        await self.server.queue.put({"operation": "step"})
+    async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
+        assert self.server
+
+        reward: twitchio.CustomReward = event.reward
+        user: twitchio.PartialUser = event.user
+
+        print(f"REWARD: {reward.title} REDEEM BY: {user.name}")
+        # self.server.dispatch({"operation": "step"})
 
     ## GAME LOGIC BELOW ##
     ## sends data {'operation': 'step'} ##

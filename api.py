@@ -24,9 +24,10 @@ SOFTWARE."""
 import asyncio
 import json
 import secrets
-from typing import Any
+from typing import Any, AsyncGenerator
 
 import aiohttp
+import asqlite
 from dotenv import dotenv_values, set_key
 from sse_starlette import EventSourceResponse
 from starlette.applications import Starlette
@@ -36,14 +37,16 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
-from bot import CLIENT_ID, CLIENT_SECRET
+from bot import CLIENT_ID, CLIENT_SECRET, Bot
 
 
 templates = Jinja2Templates(directory="website/templates")
 
 
 class Server(Starlette):
-    def __init__(self, *, bot, pool) -> None:  # we pass bot to Server when we instantiate it in launcher.py
+    def __init__(
+        self, *, bot: Bot, pool: asqlite.Pool
+    ) -> None:  # we pass bot to Server when we instantiate it in launcher.py
         super().__init__(  # calls __init__ on Starlette
             routes=[
                 # listen at endpoint. if we receive matching list of methods, we call the function
@@ -59,7 +62,9 @@ class Server(Starlette):
             ],
             on_startup=[self.on_ready],
         )
+
         self._listeners: dict[str, asyncio.Queue] = {}
+
         self.bot = bot
         self.pool = pool
 
@@ -73,10 +78,10 @@ class Server(Starlette):
         for queue in self._listeners.values():
             await queue.put(data)
 
-    async def oauth(self, request):
+    async def oauth(self, request: Request):
         return templates.TemplateResponse("oauth.html", {"request": request})
 
-    async def overlay(self, request):
+    async def overlay(self, request: Request):
         return templates.TemplateResponse("index.html", {"request": request})
 
     async def event_endpoint(self, request: Request) -> EventSourceResponse:
@@ -85,7 +90,7 @@ class Server(Starlette):
 
         return EventSourceResponse(self.process_event(identifier=identifier, request=request))
 
-    async def process_event(self, identifier: str, request: Request) -> None:
+    async def process_event(self, identifier: str, request: Request) -> AsyncGenerator[Any, Any] | None:
         queue: asyncio.Queue = self._listeners[identifier]
 
         while True:

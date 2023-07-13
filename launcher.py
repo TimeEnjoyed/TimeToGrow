@@ -28,7 +28,7 @@ import asqlite
 import uvicorn
 
 from api import Server
-from bot import CLIENT_ID, Bot, token
+from bot import Bot
 
 
 # main loop: asyncio event loop
@@ -58,7 +58,7 @@ async def main() -> None:
         await server.serve()
 
 
-async def setup_database(pool) -> None:
+async def setup_database(pool: asqlite.Pool) -> None:
     async with pool.acquire() as connection:
         # ^ We use CM so that the connection automatically closes when we're done with it
         with open("database/SCHEMA.sql") as schema:
