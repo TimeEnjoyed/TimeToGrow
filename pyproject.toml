@@ -7,8 +7,3 @@ lines_after_imports = 2
 line_length = 120
 combine_as_imports = true
 combine_star = true
-
-[tool.pyright]
-useLibraryCodeForTypes = true
-typeCheckingMode = "strict"
-pythonVersion = "3.11"

@@ -58,8 +58,3 @@ After installation and before committing run:
 black .
 isort .
 ```
-
-To check for typing errors, run:
-```shell
-pyright
-```
