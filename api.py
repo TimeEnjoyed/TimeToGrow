@@ -32,40 +32,39 @@ from sse_starlette import EventSourceResponse
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
-from starlette.routing import Route, Mount
-from starlette.templating import Jinja2Templates
+from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
+from starlette.templating import Jinja2Templates
+
 from bot import CLIENT_ID, CLIENT_SECRET
 
 
+templates = Jinja2Templates(directory="website/templates")
 
-
-templates = Jinja2Templates(directory='website/templates')
 
 class Server(Starlette):
-
     def __init__(self, *, bot, pool) -> None:  # we pass bot to Server when we instantiate it in launcher.py
         super().__init__(  # calls __init__ on Starlette
             routes=[
                 # listen at endpoint. if we receive matching list of methods, we call the function
-                Route('/oauth', self.oauth_endpoint, methods=['GET']),
-                Route('/event', self.event_endpoint, methods=['GET']),
-                Route('/test', self.test_endpoint, methods=['GET']),
-                Route('/', self.oauth),
-                Route('/overlay', self.overlay),
-                Mount('/images', StaticFiles(directory='website/static/images'), name='images'),
-                Mount('/html', StaticFiles(directory='website/templates'), name='html')  # Allows index.html to be launched through starlette
-
+                Route("/oauth", self.oauth_endpoint, methods=["GET"]),
+                Route("/event", self.event_endpoint, methods=["GET"]),
+                Route("/test", self.test_endpoint, methods=["GET"]),
+                Route("/", self.oauth),
+                Route("/overlay", self.overlay),
+                Mount("/images", StaticFiles(directory="website/static/images"), name="images"),
+                Mount(
+                    "/html", StaticFiles(directory="website/templates"), name="html"
+                ),  # Allows index.html to be launched through starlette
             ],
-            on_startup=[self.on_ready]
-
+            on_startup=[self.on_ready],
         )
         self._listeners: dict[str, asyncio.Queue] = {}
         self.bot = bot
         self.pool = pool
 
     async def on_ready(self) -> None:
-        print('Server is ready!')
+        print("Server is ready!")
 
     def dispatch(self, data: dict[Any, Any]) -> None:
         asyncio.create_task(self._dispatch(data))
@@ -75,10 +74,10 @@ class Server(Starlette):
             await queue.put(data)
 
     async def oauth(self, request):
-        return templates.TemplateResponse('oauth.html', {'request': request})
+        return templates.TemplateResponse("oauth.html", {"request": request})
 
     async def overlay(self, request):
-        return templates.TemplateResponse('index.html', {'request': request})
+        return templates.TemplateResponse("index.html", {"request": request})
 
     async def event_endpoint(self, request: Request) -> EventSourceResponse:
         identifier: str = secrets.token_urlsafe(12)
@@ -118,19 +117,21 @@ class Server(Starlette):
         For example: https://id.twitch.tv/oauth2/authorize?client_id=2hwtub5jvur3s1ww3ifb9047xnchpx&redirect_uri=http://localhost:8000/oauth&response_type=code&scope=chat:read
         """
         params = request.query_params
-        code: str = params['code']
+        code: str = params["code"]
 
         # client_id: str = CLIENT_ID  # client_id of app
         # client_secret: str = CLIENT_SECRET  # client_secret of app
-        grant: str = 'authorization_code'
-        redirect: str = 'http://localhost:8000/oauth'
+        grant: str = "authorization_code"
+        redirect: str = "http://localhost:8000/oauth"
 
-        url: str = f'https://id.twitch.tv/oauth2/token?' \
-                   f'client_id={CLIENT_ID}&' \
-                   f'client_secret={CLIENT_SECRET}&' \
-                   f'code={code}&' \
-                   f'grant_type={grant}&' \
-                   f'redirect_uri={redirect}'
+        url: str = (
+            f"https://id.twitch.tv/oauth2/token?"
+            f"client_id={CLIENT_ID}&"
+            f"client_secret={CLIENT_SECRET}&"
+            f"code={code}&"
+            f"grant_type={grant}&"
+            f"redirect_uri={redirect}"
+        )
 
         async with aiohttp.ClientSession() as session:
             async with session.post(url) as resp:
@@ -139,13 +140,11 @@ class Server(Starlette):
 
                 data: dict[str, Any] = await resp.json()
 
-                token: str = data['access_token']
-                refresh_token: str = data['refresh_token']
+                token: str = data["access_token"]
+                refresh_token: str = data["refresh_token"]
 
+                dotenv_values(".env")
+                set_key(".env", "ACCESS_TOKEN", token)
+                set_key(".env", "REFRESH_TOKEN", refresh_token)
 
-                dotenv_values('.env')
-                set_key('.env', 'ACCESS_TOKEN', token)
-                set_key('.env', 'REFRESH_TOKEN', refresh_token)
-
-
-        return templates.TemplateResponse('index.html', {'request': request})
+        return templates.TemplateResponse("index.html", {"request": request})

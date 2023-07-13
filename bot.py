@@ -29,6 +29,7 @@ import twitchio
 from dotenv import load_dotenv
 from twitchio.ext import commands, pubsub
 
+
 # main loop: asyncio event loop
 # i need to be able to run two tasks:
 # uvicorn = server that Starlette runs on
@@ -37,16 +38,16 @@ from twitchio.ext import commands, pubsub
 
 # Opens .env file
 
-load_dotenv('.env')
+load_dotenv(".env")
 
 # Assigns secret access token to "token".
-token = os.environ['ACCESS_TOKEN']  # timetogrow_ permissions, generated with tokengenerator
-CLIENT_ID = os.environ['CLIENT_ID']  # timetogrow_ app
-CLIENT_SECRET = os.environ['CLIENT_SECRET']  # timetogrow_ app
+token = os.environ["ACCESS_TOKEN"]  # timetogrow_ permissions, generated with tokengenerator
+CLIENT_ID = os.environ["CLIENT_ID"]  # timetogrow_ app
+CLIENT_SECRET = os.environ["CLIENT_SECRET"]  # timetogrow_ app
 
 epoch = datetime.datetime.utcfromtimestamp(0)
 bot_name = "timetogrow_"
-user_channel = os.environ['TEST_CHANNEL']  # add your channel name to .env file for testing purposes
+user_channel = os.environ["TEST_CHANNEL"]  # add your channel name to .env file for testing purposes
 
 
 class Bot(commands.Bot):
@@ -55,19 +56,19 @@ class Bot(commands.Bot):
         # prefix can be a callable, which returns a list of strings or a strings
         # initial_channels can also be callable
 
-        super().__init__(token, prefix='!', initial_channels=[user_channel])
+        super().__init__(token, prefix="!", initial_channels=[user_channel])
         self.server = None  # adds the app to the bot
         self.pool = pool
         self.pubsub: pubsub.PubSubPool = pubsub.PubSubPool(self)  # thanks Mysty
 
     async def event_ready(self):
         # Is logged in and ready to use commands
-        print(f'Logged in as | {self.nick}')
-        print(f'User id is | {self.user_id}')
+        print(f"Logged in as | {self.nick}")
+        print(f"User id is | {self.user_id}")
         print(self.server)
 
     async def event_message(self, message: twitchio.Message) -> None:
-        self.server.dispatch(data={'message': message.content, 'user': message.author.name})
+        self.server.dispatch(data={"message": message.content, "user": message.author.name})
 
         # example of adding something to database:
         async with self.pool.acquire() as connection:
@@ -77,7 +78,7 @@ class Bot(commands.Bot):
 
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage):
         print(f"REWARD: {event.reward.title} REDEEM BY: {event.user.name}")
-        await self.server.queue.put({'operation': 'step'})
+        await self.server.queue.put({"operation": "step"})
 
     ## GAME LOGIC BELOW ##
     ## sends data {'operation': 'step'} ##

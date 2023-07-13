@@ -28,8 +28,7 @@ import asqlite
 import uvicorn
 
 from api import Server
-from bot import Bot, token, CLIENT_ID
-
+from bot import CLIENT_ID, Bot, token
 
 
 # main loop: asyncio event loop
@@ -40,8 +39,9 @@ from bot import Bot, token, CLIENT_ID
 
 # Opens .env file
 
+
 async def main() -> None:
-    async with asqlite.create_pool('database/database.db') as pool:  # a statement called Context Manager (CM)
+    async with asqlite.create_pool("database/database.db") as pool:  # a statement called Context Manager (CM)
         await setup_database(pool)
 
         bot: Bot = Bot(pool=pool)  # instantiates TwitchIO bot
@@ -61,13 +61,13 @@ async def main() -> None:
 async def setup_database(pool) -> None:
     async with pool.acquire() as connection:
         # ^ We use CM so that the connection automatically closes when we're done with it
-        with open('database/SCHEMA.sql') as schema:
+        with open("database/SCHEMA.sql") as schema:
             await connection.executescript(schema.read())
 
-        print('Database setup complete')
+        print("Database setup complete")
+
 
 try:
     asyncio.run(main())
 except KeyboardInterrupt:
-    print('Closing down Bot and Server due to KeyboardInterrupt')
-
+    print("Closing down Bot and Server due to KeyboardInterrupt")
