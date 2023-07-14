@@ -7,11 +7,11 @@
 </head>
 
 <script>
-    const event = new EventSource("http://127.0.0.1:8000/event")
-
-    event.onmessage = function(event){
-        console.log("new data", event.data)
-    }
+    // const event = new EventSource("http://127.0.0.1:8000/event")
+    //
+    // event.onmessage = function(event){
+    //     console.log("new data", event.data)
+    // }
 
 
 
@@ -20,18 +20,18 @@
 <body>
 
 
-{% for plant in ground.items() %}
-{{ plant.name }}
-{{ plant.state }}
-{% endfor %}
+<!--{% for plant in ground.items() %}-->
+<!--{{ plant.username }}-->
+<!--{{ plant.state }}-->
+<!--{% endfor %}-->
 
 <div class="planter">
         <div class="plant" id="1"></div>
-        <div class="plant" id="1"></div>
-        <div class="plant" id="1"></div>
-        <div class="plant" id="1"></div>
-        <div class="plant" id="1"></div>
-        <div class="plant" id="1"></div>
+        <div class="plant" id="2"></div>
+        <div class="plant" id="3"></div>
+        <div class="plant" id="4"></div>
+        <div class="plant" id="5"></div>
+        <div class="plant" id="6"></div>
 
     </div>
 

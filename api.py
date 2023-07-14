@@ -76,11 +76,12 @@ class Server(Starlette):
 
     async def overlay(self, request: Request):
         thing = await self.reward_endpoint(request)
-        dict_thing = json.loads(thing)
+        ground = json.loads(thing)
+        print(ground)
 
         context = {
             "request": request,
-            "dict_thing": dict_thing}
+            "ground": ground}
 
         return templates.TemplateResponse("index.html", context)
 
@@ -116,13 +117,16 @@ class Server(Starlette):
 
     async def reward_endpoint(self, request: Request):
         async with self.pool.acquire() as connection:
-            # TODO:  data = await connection.fetchone("SELECT rowid, username from plants WHERE rowid,)
-            # rowid = data['rowid']
-            # json_data = {
-            #     "rowid": rowid,
-            #     "content": content
-            # }
+            data = await connection.fetchone("SELECT rowid, content from messages WHERE rowid=$1", 1)
+            rowid = data['rowid']
+            content = data['content']
+            json_data = {
+                "rowid": rowid,
+                "content": content
+
+            }
             json_response = json.dumps(json_data)
+            print(json_response)
         return json_response
 
             # return JSONResponse(dict(data), status_code=200)
@@ -158,6 +162,7 @@ class Server(Starlette):
 
         async with aiohttp.ClientSession() as session:
             async with session.post(url) as resp:
+                print(resp.status, resp.reason)
                 if resp.status != 200:
                     return Response(status_code=500)
 
@@ -170,4 +175,6 @@ class Server(Starlette):
                 set_key(".env", "OAUTH_ACCESS_TOKEN", oauth_access_token)
                 set_key(".env", "OAUTH_REFRESH_TOKEN", oauth_refresh_token)
 
-        return templates.TemplateResponse("index.html", {"request": request})
+                context = {"request": request}
+
+        return templates.TemplateResponse("index.html", context)

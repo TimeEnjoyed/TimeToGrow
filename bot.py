@@ -77,6 +77,8 @@ class Bot(commands.Bot):
         await self.pubsub.subscribe_topics(self.topics)
 
 
+
+
     async def event_message(self, message: twitchio.Message) -> None:
         assert self.server
         self.server.dispatch(data={"message": message.content, "user": message.author.name})
@@ -87,19 +89,34 @@ class Bot(commands.Bot):
             # anytime we deal with database, us $1 format
             await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
 
+
+
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
 
+
+
         reward: twitchio.CustomReward = event.reward
+        text_input: twitchio.CustomReward = event.input
         user: twitchio.PartialUser = event.user
-        print(reward)
+
+
+        print(f"{reward} and input: {text_input}")
         self.server.dispatch(data={"username": user})
 
         print(f"REWARD: {reward.title} REDEEM BY: {user.name}")
+
+        timestamp = datetime.datetime.now().strftime('%H:%M:%S.%f')  # current time
+        state = 1  # You need to define where this comes from
+        wilt = False  # You need to define where this comes from
+        message = "A custom message"  # You need to define where this comes from
         async with self.pool.acquire() as connection:
             # below format is sanitized inserts. (not f-string or .format)
             # anytime we deal with database, us $1 format
-            await connection.execute("INSERT INTO plants(user) VALUES($1)", user)
+            await connection.execute(
+                "INSERT INTO plants(time, username, state, wilt, message) VALUES($1, $2, $3, $4, $5)",
+                timestamp, user.name, state, wilt, message
+            )
         # self.server.dispatch({"operation": "step"})
 
     ## GAME LOGIC BELOW ##
