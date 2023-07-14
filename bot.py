@@ -90,16 +90,12 @@ class Bot(commands.Bot):
             await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
 
 
-
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
-
-
 
         reward: twitchio.CustomReward = event.reward
         text_input: twitchio.CustomReward = event.input
         user: twitchio.PartialUser = event.user
-
 
         print(f"{reward} and input: {text_input}")
         self.server.dispatch(data={"username": user})
@@ -114,8 +110,8 @@ class Bot(commands.Bot):
             # below format is sanitized inserts. (not f-string or .format)
             # anytime we deal with database, us $1 format
             await connection.execute(
-                "INSERT INTO plants(time, username, state, wilt, message) VALUES($1, $2, $3, $4, $5)",
-                timestamp, user.name, state, wilt, message
+                "INSERT INTO plants(time, username, state, wilt, text_input) VALUES($1, $2, $3, $4, $5)",
+                timestamp, user.name, state, wilt, text_input
             )
         # self.server.dispatch({"operation": "step"})
 

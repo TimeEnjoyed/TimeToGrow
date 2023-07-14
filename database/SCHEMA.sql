@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS plants (
     username TEXT,
     state INT,
     wilt BOOLEAN,
-    message TEXT
+    text_input TEXT
 );
