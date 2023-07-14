@@ -102,10 +102,15 @@ class Bot(commands.Bot):
 
         print(f"REWARD: {reward.title} REDEEM BY: {user.name}")
 
-        timestamp = datetime.datetime.now().strftime('%H:%M:%S.%f')  # current time
-        state = 1  # You need to define where this comes from
-        wilt = False  # You need to define where this comes from
-        message = "A custom message"  # You need to define where this comes from
+        # write function to get the time:
+        timestamp: datetime = datetime.datetime.now().strftime('%H:%M:%S.%f')  # current time
+
+        # write function to get the state
+        state: int = 1  # You need to define where this comes from
+
+        #write function to get the
+        wilt: bool = False  # You need to define where this comes from
+
         async with self.pool.acquire() as connection:
             # below format is sanitized inserts. (not f-string or .format)
             # anytime we deal with database, us $1 format
