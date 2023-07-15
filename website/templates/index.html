@@ -8,11 +8,11 @@
 </head>
 
 <script>
-    const event = new EventSource("http://127.0.0.1:8000/event")
-
-    event.onmessage = function(event){
-        console.log("new data", event.data)
-    }
+    // const event = new EventSource("http://127.0.0.1:8000/event")
+    //
+    // event.onmessage = function(event){
+    //     console.log("new data", event.data)
+    // }
 
 
 
@@ -20,11 +20,7 @@
 
 <body>
 
-<!-- 
-{% for plant in ground.items() %}
-{{ plant.name }}
-{{ plant.state }}
-{% endfor %} -->
+index.html
     <div class="container">
         <div class="planter">
             <div class="plant" id="1"><img src="images/Hole.png"></div>

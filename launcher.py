@@ -42,7 +42,7 @@ from bot import Bot
 # Opens .env file
 
 load_dotenv(".env")
-timeenjoyed_channel_id = 410885037
+test_channel_id = int(os.environ["TEST_CHANNEL_ID"])
 
 async def main() -> None:
     async with asqlite.create_pool("database/database.db") as pool:  # a statement called Context Manager (CM)
@@ -52,7 +52,7 @@ async def main() -> None:
         app: Server = Server(bot=bot, pool=pool)  # instantiates Starlette server, and connects to TwitchIO bot
         bot.server = app  # the bots attribute 'self.server' is now the 'app
 
-        bot.topics = [pubsub.channel_points(os.environ["OAUTH_ACCESS_TOKEN"])[timeenjoyed_channel_id]]
+        bot.topics = [pubsub.channel_points(os.environ["OAUTH_ACCESS_TOKEN"])[test_channel_id]]
 
         config: uvicorn.Config = uvicorn.Config(app, port=8000)
         server: uvicorn.Server = uvicorn.Server(config)

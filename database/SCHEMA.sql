@@ -9,9 +9,9 @@ CREATE TABLE IF NOT EXISTS messages (
 
 CREATE TABLE IF NOT EXISTS plants (
     rowid INTEGER PRIMARY KEY,
-    time TIME,
     username TEXT,
-    state INT,
-    wilt BOOLEAN,
-    text_input TEXT
+    cycle INT,
+    water BOOLEAN,
+    sabotage BOOLEAN,
+    growth_cycle INT
 );

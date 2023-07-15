@@ -31,9 +31,10 @@ from typing import TYPE_CHECKING, Dict, Any
 import asqlite
 import twitchio
 from dotenv import load_dotenv
-from twitchio.ext import commands, pubsub
+from twitchio.ext import commands, pubsub, routines
 
 from plant import Plant
+
 if TYPE_CHECKING:
     from api import Server
 
@@ -70,13 +71,12 @@ class Bot(commands.Bot):
         self.pubsub: pubsub.PubSubPool = pubsub.PubSubPool(self)  # thanks Mysty
         self.topics: list[pubsub.Topic] | None = None
 
-
     async def event_ready(self) -> None:
         # Is logged in and ready to use commands
         print(f"Logged in as | {self.nick}")
         print(f"User id is | {self.user_id}")
-        await self.pubsub.subscribe_topics(self.topics)
 
+        await self.pubsub.subscribe_topics(self.topics)
 
     async def event_message(self, message: twitchio.Message) -> None:
         assert self.server
@@ -88,45 +88,38 @@ class Bot(commands.Bot):
             # anytime we deal with database, us $1 format
             await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
 
-
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
 
-
         reward: twitchio.CustomReward = event.reward
+
         text_input: twitchio.CustomReward = event.input
-        user: twitchio.PartialUser = event.user
+        username: twitchio.PartialUser | None = event.user.name
+        cycle: int = 1
+        water: bool = False
+        sabotage: bool = False
+        growth_cycle: int | None = 1
 
         print(f"{reward} and input: {text_input}")
-        self.server.dispatch(data={"username": user})
+        self.server.dispatch(data={"username": username, "reward": reward})
 
-        print(f"REWARD: {reward.title} REDEEM BY: {user.name}")
+        if reward.title == 'PLANT SEED':
+            async with self.pool.acquire() as connection:
+                print('connection established with sqlite database')
+                # below format is sanitized inserts. (not f-string or .format)
+                # anytime we deal with database, us $1 format
+                await connection.execute(
+                    "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
+                    username.lower(), cycle, water, sabotage, growth_cycle
+                )
 
-        if reward == 'PLANT SEED':
-            connection = await asqlite.connect('database.db')
-            cursor = await connection.cursor()
-            query: str = "SELECT * FROM plants"
-            await cursor.execute(query)
-
-            rows = await cursor.fetchall()
-            print(rows)
-
-
-        # check is table is empty:
-
-    async def add_plant_to_ground(self, plant) -> Dict[str, Any]:
-        timestamp = datetime.datetime.now().strftime('%H:%M:%S.%f')
-
-
-
-        async with self.pool.acquire() as connection:
-            # below format is sanitized inserts. (not f-string or .format)
-            # anytime we deal with database, us $1 format
-            await connection.execute(
-                "INSERT INTO plants(time, username, state, wilt, text_input) VALUES($1, $2, $3, $4, $5)",
-                timestamp, user.name, state, wilt, text_input
-            )
     # self.server.dispatch({"operation": "step"})
 
     ## GAME LOGIC BELOW ##
     ## sends data {'operation': 'step'} ##
+    # @routines.routine(minutes=6)
+    # def update_state(self):
+    #     @routines.routine(minutes=1)
+    #     def update_live():
+    #         state = None
+    #         state += 1
