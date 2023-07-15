@@ -31,7 +31,7 @@ TwitchIO does whatever you want with API and puts data into queue >
 ===============================
 
 TODO:
-[timeenjoyed] - finish database
+[x] - finish database
 CREATE TABLE IF NOT EXISTS plants (
     rowid INTEGER PRIMARY KEY,
     username TEXT,

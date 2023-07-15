@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS messages (
 
 CREATE TABLE IF NOT EXISTS plants (
     rowid INTEGER PRIMARY KEY,
-    username TEXT,
+    username TEXT UNIQUE,
     cycle INT,
     water BOOLEAN,
     sabotage BOOLEAN,
