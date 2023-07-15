@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!--    <link href="css/style.css" type="text/css" rel="stylesheet" />-->
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
     <title>Time to Grow</title>
 </head>
 
 <script>
-    // const event = new EventSource("http://127.0.0.1:8000/event")
-    //
-    // event.onmessage = function(event){
-    //     console.log("new data", event.data)
-    // }
+    const event = new EventSource("http://127.0.0.1:8000/event")
+
+    event.onmessage = function(event){
+        console.log("new data", event.data)
+    }
 
 
 
@@ -20,17 +20,39 @@
 
 <body>
 
-
-
-<div class="planter">
-        <div class="plant" id="1"></div>
-        <div class="plant" id="2"></div>
-        <div class="plant" id="3"></div>
-        <div class="plant" id="4"></div>
-        <div class="plant" id="5"></div>
-        <div class="plant" id="6"></div>
-
-    </div>
-
+<!-- 
+{% for plant in ground.items() %}
+{{ plant.name }}
+{{ plant.state }}
+{% endfor %} -->
+    <div class="container">
+        <div class="planter">
+            <div class="plant" id="1"><img src="images/Hole.png"></div>
+            <div class="plant" id="2"><img src="images/Hole.png"></div>
+            <div class="plant" id="3"><img src="images/Hole.png"></div>
+            <div class="plant" id="4"><img src="images/Hole.png"></div>
+            <div class="plant" id="5"><img src="images/Hole.png"></div>
+            <div class="plant" id="6"><img src="images/Hole.png"></div>
+            <div class="plant" id="7"><img src="images/Hole.png"></div>
+            <div class="plant" id="8"><img src="images/Hole.png"></div>
+            <div class="plant" id="9"><img src="images/Hole.png"></div>
+            <div class="plant" id="10"><img src="images/Hole.png"></div>
+            <div class="plant" id="11"><img src="images/Hole.png"></div>
+            <div class="plant" id="12"><img src="images/Hole.png"></div>
+            <div class="plant" id="13"><img src="images/Hole.png"></div>
+            <div class="plant" id="14"><img src="images/Hole.png"></div>
+            <div class="plant" id="15"><img src="images/Hole.png"></div>
+            <div class="plant" id="16"><img src="images/Hole.png"></div>
+            <div class="plant" id="17"><img src="images/Hole.png"></div>
+            <div class="plant" id="18"><img src="images/Hole.png"></div>
+            <div class="plant" id="19"><img src="images/Hole.png"></div>
+            <div class="plant" id="20"><img src="images/Hole.png"></div>
+            <div class="plant" id="21"><img src="images/Hole.png"></div>
+            <div class="plant" id="22"><img src="images/Hole.png"></div>
+            <div class="plant" id="23"><img src="images/Hole.png"></div>
+            <div class="plant" id="24"><img src="images/Hole.png"></div>
+            <div class="plant" id="25"><img src="images/Hole.png"></div>
+        </div>
+    </div>    
 </body>
 </html>
