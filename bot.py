@@ -79,6 +79,10 @@ class Bot(commands.Bot):
         await self.pubsub.subscribe_topics(self.topics)
 
     async def event_message(self, message: twitchio.Message) -> None:
+        if message.echo:
+            return
+        await self.handle_commands(message)
+
         assert self.server
         self.server.dispatch(data={"message": message.content, "user": message.author.name})
 
@@ -114,6 +118,14 @@ class Bot(commands.Bot):
                 )
 
     # self.server.dispatch({"operation": "step"})
+
+    @commands.command()
+    async def water(self, ctx: commands.Context) -> None:
+        # async with self.pool.acquire() as connection:
+            # await connection.execute("SELECT username FROM plants WHERE username = ?", [ctx.author.name])
+            # if connection.fetchone() == None:
+            #     await ctx.send(f'{ctx.author.name} doesn\'t have a plant')
+        await ctx.send(f'{ctx.author.name} watered their plant!')
 
     ## GAME LOGIC BELOW ##
     ## sends data {'operation': 'step'} ##
