@@ -25,14 +25,15 @@ from __future__ import annotations
 
 import datetime
 import os
-from typing import TYPE_CHECKING
+import time
+from typing import TYPE_CHECKING, Dict, Any
 
 import asqlite
 import twitchio
 from dotenv import load_dotenv
 from twitchio.ext import commands, pubsub
 
-
+from plant import Plant
 if TYPE_CHECKING:
     from api import Server
 
@@ -77,8 +78,6 @@ class Bot(commands.Bot):
         await self.pubsub.subscribe_topics(self.topics)
 
 
-
-
     async def event_message(self, message: twitchio.Message) -> None:
         assert self.server
         self.server.dispatch(data={"message": message.content, "user": message.author.name})
@@ -93,6 +92,7 @@ class Bot(commands.Bot):
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
 
+
         reward: twitchio.CustomReward = event.reward
         text_input: twitchio.CustomReward = event.input
         user: twitchio.PartialUser = event.user
@@ -102,14 +102,22 @@ class Bot(commands.Bot):
 
         print(f"REWARD: {reward.title} REDEEM BY: {user.name}")
 
-        # write function to get the time:
-        timestamp: datetime = datetime.datetime.now().strftime('%H:%M:%S.%f')  # current time
+        if reward == 'PLANT SEED':
+            connection = await asqlite.connect('database.db')
+            cursor = await connection.cursor()
+            query: str = "SELECT * FROM plants"
+            await cursor.execute(query)
 
-        # write function to get the state
-        state: int = 1  # You need to define where this comes from
+            rows = await cursor.fetchall()
+            print(rows)
 
-        #write function to get the
-        wilt: bool = False  # You need to define where this comes from
+
+        # check is table is empty:
+
+    async def add_plant_to_ground(self, plant) -> Dict[str, Any]:
+        timestamp = datetime.datetime.now().strftime('%H:%M:%S.%f')
+
+
 
         async with self.pool.acquire() as connection:
             # below format is sanitized inserts. (not f-string or .format)
@@ -118,7 +126,7 @@ class Bot(commands.Bot):
                 "INSERT INTO plants(time, username, state, wilt, text_input) VALUES($1, $2, $3, $4, $5)",
                 timestamp, user.name, state, wilt, text_input
             )
-        # self.server.dispatch({"operation": "step"})
+    # self.server.dispatch({"operation": "step"})
 
     ## GAME LOGIC BELOW ##
     ## sends data {'operation': 'step'} ##

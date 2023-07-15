@@ -6,18 +6,13 @@ BASIC EXAMPLE
 - Questions: attributes of user?
 - Grab seeds.jpg and display on template.
 
-
-
 ===================================================================
 Three parts
 1) This should work from command line- Growth Plant Program (state)
-
 2) The Server Problem - connect user to program
 twitchAPI - connects to events such as: redemption points, follows, subs
-
 3) How to display via HTML
- -prob need js y/n
-
+ -prob need js
 
 starlette receives the request into a function.
 def receive_redemption(?)
@@ -27,17 +22,37 @@ def receive_redemption(?)
 Process/thinking aloud:
 - redeem event --> request ( username, type of redemption) POST.
 
-
 - Server Side Event
-
-
-
 User on Twitch Redeems > TwitchIO Recieves Redemption >
 TwitchIO does whatever you want with API and puts data into queue >
  Starlette receives data from queue >
  Starlette sends an event to all subscribed listeners
 
 ===============================
+
+TODO:
+[]
+
+# TO GET THE CYCLE
+[] - minute = start adding this to cycle when first plant is made.
+[] - logic for "cycle" (int, 1-12)
+        - type: int
+        - for minute in twelve_minutes:
+            cycle += minute
+
+
+
+
+State += 1 if:
+- water = True
+- wilt = False
+- cycle = 1
+- sabotage = False
+
+State -1 if:
+- sabotage = True
+
+
 SABOTAGE (redemption):
 - anyone can sabotage
 - non-followers: return "you need to be a follower", reject/refund
@@ -53,6 +68,11 @@ PLANT+WATER SEED (redemption):
 WATER (command):
 - non-follower: bot passes
 - follower: bot sends info to water()
+
+WILT
+- if someone doesn't water when 6 min < cycle < 12min:
+- state for plant: -1? ??
+- shows yellow version of plant?
 
 LOGIC in BACK:
 - database
@@ -79,9 +99,6 @@ def event
 
 
 
-
-time: int =
-
 async def get_step(username):
     - "check to see if username exists"
 
@@ -93,16 +110,28 @@ async def get_step(username):
 
 async def dispatch
 
+========== new approach ==========
+    Once someone plants a seed, a 6-minute routine begins.
+        > guaranteed ping to the front
+            - grow
+            - dies
+
+
+    And a 1-minute by minute routine begins.
+        > pings when:
+            - born
+            - water
+            - sabotage
+
+json example:
+{ 'ground':
+    {
+        'username': username,  # '' or 'timenejoyed'
+        '
+    }
 
 
 
 
 
 
-
-
-
-LOGIC in FRONT = > channel
-- time => front
-- wilt => front
-- cylce =>
