@@ -31,26 +31,48 @@ TwitchIO does whatever you want with API and puts data into queue >
 ===============================
 
 TODO:
-[]
+[timeenjoyed] - finish database
+CREATE TABLE IF NOT EXISTS plants (
+    rowid INTEGER PRIMARY KEY,
+    username TEXT,
+    cycle INT,
+    water BOOLEAN,
+    sabotage BOOLEAN,
+    growth_cycles INT
+);
+growth_cycles: int = 1 - 8
+    1 - mound
+    2 - sprout
+    3 - seedling
+    4 - 2 leaves
+    5 - higher
+    6 - little bud
+    7 - starting to bloom
+    8 - full bloom
+
+
 
 # TO GET THE CYCLE
-[] - minute = start adding this to cycle when first plant is made.
-[] - logic for "cycle" (int, 1-12)
-        - type: int
-        - for minute in twelve_minutes:
-            cycle += minute
+[timeenjoyed]
+    - twitchio.routines (sends to frontend every 6 mins)
+    - automatic
+  [bunnie]  - cycle: int = 1 2 3 4
+            1 grow
+            2 water 1) water= True > 1; 2) water=False -> 3
+            3 waits for water. 1) water = True > 2; 2) water= False -> 4
+            4 death
+
+     - if someone waters their plant first, and then it gets sabotaged = nothing happens
+      - if someone sabotages first, then waters it = -1 cycle
+
+[] - twitchio.routines (sends to frontend every 1 min)
+      - triggered
 
 
+[bunnie] - function that responds to water-text command
 
+[timeenjoyed] - sabotage - functions that responds
 
-State += 1 if:
-- water = True
-- wilt = False
-- cycle = 1
-- sabotage = False
-
-State -1 if:
-- sabotage = True
 
 
 SABOTAGE (redemption):
@@ -75,13 +97,41 @@ WILT
 - shows yellow version of plant?
 
 LOGIC in BACK:
+user: str = 'timeenjoyed'
+rowid: int = 1  # 1-25
+water: bool = True
+cycle: int =  1 # 1-4
+sabotage: bool = True
+growth_cycles: int = 1 - 8
 - database
-- { places:
-    {'place: 1, {'username': 'timeenjoyed', 'state': 3, 'wilt': false}},
-    {'place: 2, {'username': 'ambivalentbunnie', 'state': 2, 'wilt': true }},
-    {'place: 3, {'username': 'mystypy', 'state': 2, 'wilt': true}},
-    {'place: 4, {'username': 'kroden', 'state': 2, 'wilt': true }},
-    }
+[
+    {
+        "rowid": 1,
+        "username": "John",
+        "water": 25,
+        "cycle": null,
+        "sabotage": True,
+        growth_cycles = 1
+    },
+    {
+        "rowid": 2,
+        "username": "John",
+        "water": 25,
+        "cycle": null,
+        "sabotage": True,
+        growth_cycles = 1
+    },
+    {
+        "rowid": 3,
+        "username": "John",
+        "water": 25,
+        "cycle": null,
+        "sabotage": True,
+        growth_cycles = 1
+    },...
+
+]
+
 
 <script>
 
