@@ -79,6 +79,8 @@ class Bot(commands.Bot):
         await self.pubsub.subscribe_topics(self.topics)
 
     async def event_message(self, message: twitchio.Message) -> None:
+        if message.echo:
+            return
         assert self.server
         self.server.dispatch(data={"message": message.content, "user": message.author.name})
 
@@ -87,6 +89,16 @@ class Bot(commands.Bot):
             # below format is sanitized inserts. (not f-string or .format)
             # anytime we deal with database, us $1 format
             await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
+        await self.handle_commands(message)
+
+    async def event_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            return
+        print(error)
+
+    @commands.command()
+    async def water(self, ctx: commands.Context) -> None:
+        await ctx.send(f"{ctx.author.name} watered their plant!")
 
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
@@ -106,12 +118,19 @@ class Bot(commands.Bot):
         if reward.title == 'PLANT SEED':
             async with self.pool.acquire() as connection:
                 print('connection established with sqlite database')
-                # below format is sanitized inserts. (not f-string or .format)
-                # anytime we deal with database, us $1 format
+
+                # existing_usernames = await connection.fetchall(
+                #     "SELECT COUNT(*) FROM plants WHERE username=($1)", username)
+
+
+                    # below format is sanitized inserts. (not f-string or .format)
+                    # anytime we deal with database, us $1 format
                 await connection.execute(
                     "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
-                    username.lower(), cycle, water, sabotage, growth_cycle
+                    [username.lower(), cycle, water, sabotage, growth_cycle]
                 )
+            # else:
+            #     print("user already has a plant :D")
 
     # self.server.dispatch({"operation": "step"})
 
