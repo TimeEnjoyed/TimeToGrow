@@ -70,6 +70,7 @@ class Bot(commands.Bot):
         self.pool = pool
         self.pubsub: pubsub.PubSubPool = pubsub.PubSubPool(self)  # thanks Mysty
         self.topics: list[pubsub.Topic] | None = None
+        self.rows = 10
 
     async def event_ready(self) -> None:
         # Is logged in and ready to use commands
@@ -133,6 +134,7 @@ class Bot(commands.Bot):
             else:
                 print("No plant yet!")
 
+
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
 
@@ -152,16 +154,25 @@ class Bot(commands.Bot):
             async with self.pool.acquire() as connection:
                 print('connection established with sqlite database')
 
-                # existing_usernames = await connection.fetchall(
-                #     "SELECT COUNT(*) FROM plants WHERE username=($1)", username)
+                all_table_rows = await connection.execute(
+                    "SELECT COUNT(*) FROM plants")
+
+                one_row_of_table = await all_table_rows.fetchone()
+                num_rows = one_row_of_table[0]
+                print(num_rows)
+
+                if num_rows < self.rows:
+                    try:
+                        await connection.execute(
+                            "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
+                            username.lower(), cycle, water, sabotage, growth_cycle)
+                    except:
+                        print(f"{username} looks like you already have a plant!")
+                else:
+                    print(f"sorry {username}, no more spots left")
 
 
-                    # below format is sanitized inserts. (not f-string or .format)
-                    # anytime we deal with database, us $1 format
-                await connection.execute(
-                    "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
-                    [username.lower(), cycle, water, sabotage, growth_cycle]
-                )
+
             # else:
             #     print("user already has a plant :D")
 
