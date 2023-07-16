@@ -27,11 +27,17 @@ User on Twitch Redeems > TwitchIO Recieves Redemption >
 TwitchIO does whatever you want with API and puts data into queue >
  Starlette receives data from queue >
  Starlette sends an event to all subscribed listeners
+===============================
+Feature creep:
+- refund redmptions that dont work
+- create customredemptions
+- delete customredemptions
 
 ===============================
 
 TODO:
 [x] - finish database
+[timeenjoyed] - if null exists in
 CREATE TABLE IF NOT EXISTS plants (
     rowid INTEGER PRIMARY KEY,
     username TEXT,
