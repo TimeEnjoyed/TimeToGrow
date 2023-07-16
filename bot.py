@@ -70,6 +70,8 @@ class Bot(commands.Bot):
         self.pool = pool
         self.pubsub: pubsub.PubSubPool = pubsub.PubSubPool(self)  # thanks Mysty
         self.topics: list[pubsub.Topic] | None = None
+        self.rows: int = 10
+        self.channel_store: dict[int, str] = {}
 
     async def event_ready(self) -> None:
         # Is logged in and ready to use commands
@@ -149,6 +151,15 @@ class Bot(commands.Bot):
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
 
+        channel_info = self.channel_store.get(event.channel_id, None)
+        if not channel_info:
+            channel_info = (await self.fetch_channels([event.channel_id]))[0].user.name
+            self.channel_store[event.channel_id] = channel_info
+            channel = self.get_channel(channel_info)
+        else:
+            channel = self.get_channel(channel_info)
+        print(channel)
+
         reward: twitchio.CustomReward = event.reward
 
         text_input: twitchio.CustomReward = event.input
@@ -164,6 +175,7 @@ class Bot(commands.Bot):
         if reward.title == 'PLANT SEED':
             async with self.pool.acquire() as connection:
                 print('connection established with sqlite database')
+                await channel.send(f"connection established with sqlite database")
 
                 # retrieve current number of rows in plants table:
                 count_rows_cursor = await connection.execute(
@@ -184,7 +196,7 @@ class Bot(commands.Bot):
                             "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
                             username.lower(), cycle, water, sabotage, growth_cycle)
                     except:
-                        print(f"{username}, ONE looks like you already have a plant")
+                        await channel.send(f"{username} looks like you already have a plant")
                         # TODO: refund points
 
                 else:
@@ -198,10 +210,10 @@ class Bot(commands.Bot):
                                 username.lower(), cycle, water, sabotage, growth_cycle, avail_rowid)
                         except Exception as e:
                             print(e)
-                            print(f"{username}, TWO looks like you already have a plant")
+                            await channel.send(f"{username} looks like you already have a plant")
                             # TODO: refund points
                     else:
-                        print(f"{username}, sorry there are no spots left")
+                        await channel.send(f"{username}, sorry there are no spots left")
 
         if reward.title == 'SABOTAGE PLANT':
             async with self.pool.acquire() as connection:
@@ -231,12 +243,17 @@ class Bot(commands.Bot):
 
 
 
-
-    ## GAME LOGIC BELOW ##
-    ## sends data {'operation': 'step'} ##
+    #
+    # GAME LOGIC BELOW ##
+    # sends data {'operation': 'step'} ##
     # @routines.routine(minutes=6)
     # def update_state(self):
+    #
+    #     print(f"its been six mins")
+    #
+    #
     #     @routines.routine(minutes=1)
     #     def update_live():
     #         state = None
     #         state += 1
+    #         print("it's been 1 min")
