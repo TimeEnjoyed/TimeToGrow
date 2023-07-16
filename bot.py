@@ -100,20 +100,14 @@ class Bot(commands.Bot):
     @commands.command()
     async def water(self, ctx: commands.Context) -> None:        
         async with self.pool.acquire() as connection:
+            username = ctx.author.name.lower()
             # TESTING PURPOSES ONLY
-            # await connection.execute(
-            #             "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
-            #             ctx.author.name, 1, False, False, 1
-            #         )
-            user_plant = await connection.fetchone("SELECT cycle, water, sabotage, growth_cycle FROM plants WHERE username = $1", ctx.author.name)
+            # await connection.execute("UPDATE plants SET username = ? WHERE rowid = ?", username, 8)
+            user_plant = await connection.fetchone("SELECT cycle, water, sabotage, growth_cycle FROM plants WHERE username = ?", username)
+            water_cycle, water, sabotage, growth_cycle = user_plant
+            water = bool(water)
+            sabotage = bool(sabotage)
             if user_plant is not None:
-                water_cycle = user_plant[1]
-                water = bool(user_plant[2])
-                sabotage = bool(user_plant[3])
-                # growth_cycle = user_plant[4]
-                print(water)
-                print(growth_cycle)
-                print(water_cycle)
                 if not sabotage and not water:
                     if water_cycle == 1:
                         water_cycle = 2
@@ -126,9 +120,9 @@ class Bot(commands.Bot):
                         water_cycle = 2
                         await ctx.send(f"{ctx.author.name} watered their plant!")
                     elif water_cycle == 4:
-                        await ctx.send(f"{ctx.author.name} plant DIED! D:")
-                        await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ?", "", "", "", "", "")
-                    await connection.execute("UPDATE plants SET cycle = ?, water = ?, growth_cycle = ? WHERE username = ?", water_cycle, True, growth_cycle, ctx.author.name)
+                        await ctx.send(f"{ctx.author.name}'s plant DIED! D:")
+                        await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ? WHERE username = ?", None, None, None, None, None, username)
+                    await connection.execute("UPDATE plants SET cycle = ?, water = ?, growth_cycle = ? WHERE username = ?", water_cycle, True, growth_cycle, username)
                 elif water:
                     if water_cycle == 1:
                         water_cycle = 3
@@ -139,14 +133,15 @@ class Bot(commands.Bot):
                         water_cycle = 4
                         await ctx.send(f"{ctx.author.name} is drowning their plant")
                     elif water_cycle == 4:
-                        await ctx.send(f"{ctx.author.name} drowned their plant!")
-                        await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ?", "", "", "", "", "")
+                        await ctx.send(f"{ctx.author.name} plant is drowned T_T!")
+                        await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ? WHERE username = ?", None, None, None, None, None, username)
                 else:
                     await ctx.send(f"{ctx.author.name} plant is covered from the water!")
                     sabotage = False
                     await connection.execute("UPDATE plants SET sabotage = ?", False)
             else:
-                await ctx.send(f"{ctx.author.name} doesn't have a plant!")
+                pass
+                # await ctx.send(f"{ctx.author.name} doesn't have a plant!")
 
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
