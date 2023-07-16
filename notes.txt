@@ -66,8 +66,12 @@ growth_cycles: int = 1 - 8
     - need to pull all the rows that have water = False and update their cycle and growth_cycle to reflect missing a water cycle
   [bunnie]  - cycle: int = 1 2 3 4
             1 grow
-            2 water 1) water= True > 1; 2) water=False -> 3
-            3 waits for water. 1) water = True > 2; 2) water= False -> 4
+            2 water
+                1) water= True > 1;
+                2) water=False -> 3
+            3 waits for water.
+                1) water = True > 2;
+                2) water= False -> 4
             4 death
 
      - if someone waters their plant first, and then it gets sabotaged = cycle doens't change
