@@ -98,27 +98,27 @@ class Bot(commands.Bot):
         print(error)
 
     @commands.command()
-    async def water(self, ctx: commands.Context) -> None:
-        await ctx.send(f"{ctx.author.name} watered their plant!")
-        
+    async def water(self, ctx: commands.Context) -> None:        
         async with self.pool.acquire() as connection:
-            await connection.execute("UPDATE plants SET water = ?", "True")
+            await connection.execute("UPDATE plants SET water = ?", True)
             # TESTING PURPOSES ONLY
             # await connection.execute(
             #             "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
             #             ctx.author.name, 1, "False", "False", 1
-                    # )
+            #         )
 
-            user_plant = await connection.fetchone("SELECT username, cycle, water FROM plants WHERE username = $1", ctx.author.name)
-            if len(user_plant) > 0 and user_plant != "NULL":
+            user_plant = await connection.fetchall("SELECT username, cycle, water FROM plants WHERE username = $1", ctx.author.name)
+            if (len(user_plant) > 0):
+                await ctx.send(f"{ctx.author.name} watered their plant!")
                 user_cycle = user_plant[1]
-                water = bool(user_plant[2])
+                water = user_plant[2]
+                print(bool(water))
                 if user_cycle == 1:
                     user_cycle = 2
                     # image += 1
                 elif user_cycle == 2:
                     if water:
-                        user_cycle = 4
+                        user_cycle = 1
                     else:
                         user_cycle = 3
                 elif user_cycle == 3:
@@ -129,7 +129,7 @@ class Bot(commands.Bot):
                 await connection.execute("UPDATE plants SET cycle = ?, water = ? WHERE username = ?", user_cycle, "False", ctx.author.name)
                 if user_cycle == 4:
                     print("death")
-                    # await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ?", None, None, None, None, None)
+                    await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ?", None, None, None, None, None)
             else:
                 print("No plant yet!")
 
