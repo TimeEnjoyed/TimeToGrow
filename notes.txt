@@ -62,6 +62,8 @@ growth_cycles: int = 1 - 8
 [timeenjoyed]
     - twitchio.routines (sends to frontend every 6 mins)
     - automatic
+    **** ADDED ****
+    - need to pull all the rows that have water = False and update their cycle and growth_cycle to reflect missing a water cycle
   [bunnie]  - cycle: int = 1 2 3 4
             1 grow
             2 water 1) water= True > 1; 2) water=False -> 3

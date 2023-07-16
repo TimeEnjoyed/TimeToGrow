@@ -105,37 +105,48 @@ class Bot(commands.Bot):
             #             "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
             #             ctx.author.name, 1, False, False, 1
             #         )
-            user_plant = await connection.fetchone("SELECT username, cycle, water, sabotage FROM plants WHERE username = $1", ctx.author.name)
-            user_cycle = user_plant[1]
-            water = user_plant[2]
-            sabotage = user_plant[3]
-            if len(user_plant) > 0:
-                if sabotage == 0:
-                    await connection.execute("UPDATE plants SET water = ?", True)
-                    if user_cycle == 1:
-                        user_cycle = 2
-                        # image += 1
-                    elif user_cycle == 2:
-                        if water:
-                            user_cycle = 1
-                            await ctx.send(f"{ctx.author.name} watered their plant!")
-                        else:
-                            user_cycle = 3
-                    elif user_cycle == 3:
-                        if water:
-                            user_cycle = 2
-                            await ctx.send(f"{ctx.author.name} watered their plant!")
-                        else:
-                            user_cycle = 4
-                    await connection.execute("UPDATE plants SET cycle = ?, water = ? WHERE username = ?", user_cycle, False, ctx.author.name)
-                    if user_cycle == 4:
+            user_plant = await connection.fetchone("SELECT cycle, water, sabotage, growth_cycle FROM plants WHERE username = $1", ctx.author.name)
+            if user_plant is not None:
+                water_cycle = user_plant[1]
+                water = bool(user_plant[2])
+                sabotage = bool(user_plant[3])
+                # growth_cycle = user_plant[4]
+                print(water)
+                print(growth_cycle)
+                print(water_cycle)
+                if not sabotage and not water:
+                    if water_cycle == 1:
+                        water_cycle = 2
+                        growth_cycle += 1
+                        await ctx.send(f"{ctx.author.name} watered their plant!")
+                    elif water_cycle == 2:
+                        water_cycle = 1
+                        await ctx.send(f"{ctx.author.name} watered their plant!")
+                    elif water_cycle == 3:
+                        water_cycle = 2
+                        await ctx.send(f"{ctx.author.name} watered their plant!")
+                    elif water_cycle == 4:
                         await ctx.send(f"{ctx.author.name} plant DIED! D:")
                         await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ?", "", "", "", "", "")
+                    await connection.execute("UPDATE plants SET cycle = ?, water = ?, growth_cycle = ? WHERE username = ?", water_cycle, True, growth_cycle, ctx.author.name)
+                elif water:
+                    if water_cycle == 1:
+                        water_cycle = 3
+                    elif water_cycle == 2:
+                        water_cycle = 3
+                        await ctx.send(f"{ctx.author.name} is drowning their plant")
+                    elif water_cycle == 3:
+                        water_cycle = 4
+                        await ctx.send(f"{ctx.author.name} is drowning their plant")
+                    elif water_cycle == 4:
+                        await ctx.send(f"{ctx.author.name} drowned their plant!")
+                        await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ?", "", "", "", "", "")
                 else:
-                    await ctx.send(f"{ctx.author.name} you been sabotaged!")
-                    await connection.execute("UPDATE plants SET sabotage = ? WHERE username = ?", False, ctx.author.name)
+                    await ctx.send(f"{ctx.author.name} plant is covered from the water!")
+                    sabotage = False
+                    await connection.execute("UPDATE plants SET sabotage = ?", False)
             else:
-                print("No plant yet!")
+                await ctx.send(f"{ctx.author.name} doesn't have a plant!")
 
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
