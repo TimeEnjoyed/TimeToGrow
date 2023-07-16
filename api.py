@@ -179,4 +179,4 @@ class Server(Starlette):
 
                 context = {"request": request}
 
-        return templates.TemplateResponse("index.html", context)
+        return templates.TemplateResponse("overlay.html", context)

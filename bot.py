@@ -146,7 +146,7 @@ class Bot(commands.Bot):
                 water_cycle = 1
                 await ctx.send(f"{ctx.author.name} plant is drowned T_T!")
                 await connection.execute("UPDATE plants SET username = ? WHERE username = ?", None, username)
-                return
+
             await connection.execute("UPDATE plants SET cycle = ? WHERE username = ?", water_cycle, username)
         else:
             await ctx.send(f"{ctx.author.name} plant is covered from the water!")
@@ -250,14 +250,16 @@ class Bot(commands.Bot):
                     print(f"sorry {username}, but {text_input} doesn't have a plant to sabotage")
                 return
 
-
     # GAME LOGIC BELOW ##
     # sends data {'operation': 'step'} ##
     @routines.routine(minutes=1)
     async def update_state(self):
+
         """This checks database
-         changes the grow_cycle based on water, sabotage, and current grow_cycle.
-         and dispatches json event"""
+        changes the grow_cycle based on water, sabotage, and current grow_cycle.
+        and dispatches json event"""
+        print("new cycle")
+
         assert self.server
         ground: list[dict] = []
 
@@ -274,21 +276,58 @@ class Bot(commands.Bot):
             print(f"Number of rows: {num_rows}")
             # for row in plant_rows:
             for row in plant_rows:
-                plant: dict = {}
-                plant["rowid"] = row[0]
-                plant["username"] = row[1]
-                plant["cycle"] = row[2]
-                plant["water"] = row[3]
-                plant["sabotage"] = row[4]
-                plant["growth_cycle"] = row[5]
+                plant: dict = {
+                    "rowid": row[0],
+                    "username": row[1],
+                    "cycle": row[2],
+                    "water": row[3],
+                    "sabotage": row[4],
+                    "growth_cycle": row[5]}
+
+                print(f"its been 1 mins")
                 ground.append(plant)
-            print(f"its been 1 mins")
-            ground.append(plant)
-        print(ground)
+
+            # loop through old ground, add grwoth_cycle to it. IF.......
+            for plant in ground:
+                print(plant)
+                # first cycle, where (no water and no sabotage) --> moves onto cycle 2
+                if plant['cycle'] == 1:
+                    if plant['water']:
+                        plant['cycle'] = 1
+                    if plant['sabotage'] == 1:
+                        plant['cycle'] = 1
+                    if not plant['water'] and not plant['sabotage']:
+                        plant['cycle'] = 2
+                        plant['growth_cycle'] += 1
+                # second cycle, where plant is thirsty. water + no sabotage --> moves onto cycle 1
+                elif plant['cycle'] == 2:
+                    if plant['water'] and not plant['sabotage']:
+                        plant['cycle'] = 1
+                    if not plant['water'] and plant['sabotage']:
+                        plant['cycle'] = 2
+                    if plant['water'] and plant['sabotage']:
+                        plant['cycle'] = 2
+                    if not plant['water']:
+                        plant['cycle'] = 3
+                # plant is about to die if you don't water it
+                if plant['cycle'] == 3:
+                    if not plant['water']:
+                        plant['username'] = None
+                        plant['cycle'] = 4
+                    if plant['water']:
+                        plant['cycle'] = 1
+                    if plant['water'] and plant['sabotage']:
+                        plant['cycle'] = 3
+                # fourth cycle - plant is dead. open spot available.
+                # waiting for new plant owner with default settings.
+                if plant['cycle'] == 4:
+                    plant['username'] = None
+
+
 
         self.server.dispatch(data=ground)
 
-
+        # await ctx.send(f"{ctx.author.name}data sent")
 
     # @routines.routine(minutes=1)
     # async def update_live(self):
