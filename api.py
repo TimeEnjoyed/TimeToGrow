@@ -54,7 +54,8 @@ class Server(Starlette):
                 Route("/oauth", self.oauth_endpoint, methods=["GET"]),
                 Route("/event", self.event_endpoint, methods=["GET"]),
                 Route("/reward", self.reward_endpoint, methods=["GET"]),
-                Route("/", self.overlay),
+                Route("/overlay_endpoint", self.overlay_endpoint),
+                Route('/', self.overlay),
                 Route("/login", self.login),
                 Mount("/images", StaticFiles(directory="website/static/images"), name="images"),
                 Mount("/html", StaticFiles(directory="website/templates"), name="html"),
@@ -76,16 +77,15 @@ class Server(Starlette):
     async def login(self, request: Request):
         return templates.TemplateResponse("oauth.html", {"request": request})
 
+    async def overlay_endpoint(self, request: Request) -> EventSourceResponse:
+
+        identifier: str = secrets.token_urlsafe(12)
+        self._listeners[identifier] = asyncio.Queue()
+
+        return EventSourceResponse(self.process_event(identifier=identifier, request=request))
+
     async def overlay(self, request: Request):
-        thing = await self.reward_endpoint(request)
-        ground = json.loads(thing)
-        print(ground)
-
-        context = {
-            "request": request,
-            "ground": ground}
-
-        return templates.TemplateResponse("index.html", context)
+        return templates.TemplateResponse("overlay.html", {"request": request})
 
 ################[connects server to bot data]####################
     def dispatch(self, data: dict[Any, Any]) -> None:

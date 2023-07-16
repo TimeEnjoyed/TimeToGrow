@@ -73,7 +73,7 @@ class Bot(commands.Bot):
         self.rows: int = 10
         self.channel_store: dict[int, str] = {}
         self.update_state.start()
-        self.update_live.start()
+        # self.update_live.start()
 
     async def event_ready(self) -> None:
         # Is logged in and ready to use commands
@@ -94,7 +94,7 @@ class Bot(commands.Bot):
             # below format is sanitized inserts. (not f-string or .format)
             # anytime we deal with database, us $1 format
             await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
-        await self.handle_commands(message)
+        # await self.handle_commands(message)
 
     async def event_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
@@ -258,6 +258,7 @@ class Bot(commands.Bot):
         """This checks database
          changes the grow_cycle based on water, sabotage, and current grow_cycle.
          and dispatches json event"""
+        assert self.server
         ground: list[dict] = []
 
         async with self.pool.acquire() as connection:
@@ -281,12 +282,17 @@ class Bot(commands.Bot):
                 plant["sabotage"] = row[4]
                 plant["growth_cycle"] = row[5]
                 ground.append(plant)
-            print(f"its been six mins")
+            print(f"its been 1 mins")
+            ground.append(plant)
+        print(ground)
+
         self.server.dispatch(data=ground)
 
-    @routines.routine(minutes=1)
-    async def update_live(self):
-        """Eventually updates wilt
-        TODO after codejam is over
-        """
-        print(f"it's been 1 min")
+
+
+    # @routines.routine(minutes=1)
+    # async def update_live(self):
+    #     """Eventually updates wilt
+    #     TODO after codejam is over
+    #     """
+    #     print(f"it's been 1 min")
