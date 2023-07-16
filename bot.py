@@ -70,7 +70,6 @@ class Bot(commands.Bot):
         self.pool = pool
         self.pubsub: pubsub.PubSubPool = pubsub.PubSubPool(self)  # thanks Mysty
         self.topics: list[pubsub.Topic] | None = None
-        self.rows = 10
 
     async def event_ready(self) -> None:
         # Is logged in and ready to use commands
@@ -101,39 +100,42 @@ class Bot(commands.Bot):
     @commands.command()
     async def water(self, ctx: commands.Context) -> None:        
         async with self.pool.acquire() as connection:
-            await connection.execute("UPDATE plants SET water = ?", True)
             # TESTING PURPOSES ONLY
             # await connection.execute(
             #             "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
-            #             ctx.author.name, 1, "False", "False", 1
+            #             ctx.author.name, 1, False, False, 1
             #         )
-
-            user_plant = await connection.fetchall("SELECT username, cycle, water FROM plants WHERE username = $1", ctx.author.name)
-            if (len(user_plant) > 0):
-                await ctx.send(f"{ctx.author.name} watered their plant!")
-                user_cycle = user_plant[1]
-                water = user_plant[2]
-                print(bool(water))
-                if user_cycle == 1:
-                    user_cycle = 2
-                    # image += 1
-                elif user_cycle == 2:
-                    if water:
-                        user_cycle = 1
-                    else:
-                        user_cycle = 3
-                elif user_cycle == 3:
-                    if water:
+            user_plant = await connection.fetchone("SELECT username, cycle, water, sabotage FROM plants WHERE username = $1", ctx.author.name)
+            user_cycle = user_plant[1]
+            water = user_plant[2]
+            sabotage = user_plant[3]
+            if len(user_plant) > 0:
+                if sabotage == 0:
+                    await connection.execute("UPDATE plants SET water = ?", True)
+                    if user_cycle == 1:
                         user_cycle = 2
-                    else:
-                        user_cycle = 4
-                await connection.execute("UPDATE plants SET cycle = ?, water = ? WHERE username = ?", user_cycle, "False", ctx.author.name)
-                if user_cycle == 4:
-                    print("death")
-                    await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ?", None, None, None, None, None)
+                        # image += 1
+                    elif user_cycle == 2:
+                        if water:
+                            user_cycle = 1
+                            await ctx.send(f"{ctx.author.name} watered their plant!")
+                        else:
+                            user_cycle = 3
+                    elif user_cycle == 3:
+                        if water:
+                            user_cycle = 2
+                            await ctx.send(f"{ctx.author.name} watered their plant!")
+                        else:
+                            user_cycle = 4
+                    await connection.execute("UPDATE plants SET cycle = ?, water = ? WHERE username = ?", user_cycle, False, ctx.author.name)
+                    if user_cycle == 4:
+                        await ctx.send(f"{ctx.author.name} plant DIED! D:")
+                        await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ?", "", "", "", "", "")
+                else:
+                    await ctx.send(f"{ctx.author.name} you been sabotaged!")
+                    await connection.execute("UPDATE plants SET sabotage = ? WHERE username = ?", False, ctx.author.name)
             else:
                 print("No plant yet!")
-
 
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
@@ -154,25 +156,16 @@ class Bot(commands.Bot):
             async with self.pool.acquire() as connection:
                 print('connection established with sqlite database')
 
-                all_table_rows = await connection.execute(
-                    "SELECT COUNT(*) FROM plants")
-
-                one_row_of_table = await all_table_rows.fetchone()
-                num_rows = one_row_of_table[0]
-                print(num_rows)
-
-                if num_rows < self.rows:
-                    try:
-                        await connection.execute(
-                            "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
-                            username.lower(), cycle, water, sabotage, growth_cycle)
-                    except:
-                        print(f"{username} looks like you already have a plant!")
-                else:
-                    print(f"sorry {username}, no more spots left")
+                # existing_usernames = await connection.fetchall(
+                #     "SELECT COUNT(*) FROM plants WHERE username=($1)", username)
 
 
-
+                    # below format is sanitized inserts. (not f-string or .format)
+                    # anytime we deal with database, us $1 format
+                await connection.execute(
+                    "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
+                    [username.lower(), cycle, water, sabotage, growth_cycle]
+                )
             # else:
             #     print("user already has a plant :D")
 
