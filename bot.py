@@ -94,7 +94,7 @@ class Bot(commands.Bot):
             # below format is sanitized inserts. (not f-string or .format)
             # anytime we deal with database, us $1 format
             await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
-        # await self.handle_commands(message)
+        await self.handle_commands(message)
 
     async def event_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
@@ -103,6 +103,7 @@ class Bot(commands.Bot):
 
     @commands.command()
     async def water(self, ctx: commands.Context) -> None:
+        print("hello?")
         async with self.pool.acquire() as connection:
             username = ctx.author.name.lower()
             # TESTING PURPOSES ONLY
@@ -258,7 +259,6 @@ class Bot(commands.Bot):
         """This checks database
         changes the grow_cycle based on water, sabotage, and current grow_cycle.
         and dispatches json event"""
-        print("new cycle")
 
         assert self.server
         ground: list[dict] = []
@@ -322,9 +322,18 @@ class Bot(commands.Bot):
                 # waiting for new plant owner with default settings.
                 if plant['cycle'] == 4:
                     plant['username'] = None
+        async with self.pool.acquire() as connection:
+            for row in plant_rows:
+                rowid = row[0],
+                username = row[1],
+                cycle = row[2],
+                water = row[3],
+                sabotage = row[4],
+                growth_cycle = row[5]
 
-
-
+                await connection.execute(
+                    "UPDATE plants SET username = $1, cycle = $2, water = $3, sabotage = $4, growth_cycle = $5 WHERE rowid = $6",
+                                username.lower(), cycle, water, sabotage, growth_cycle, rowid)
         self.server.dispatch(data=ground)
 
         # await ctx.send(f"{ctx.author.name}data sent")
