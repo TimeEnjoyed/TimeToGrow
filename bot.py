@@ -81,7 +81,6 @@ class Bot(commands.Bot):
     async def event_message(self, message: twitchio.Message) -> None:
         if message.echo:
             return
-        await self.handle_commands(message)
 
         assert self.server
         self.server.dispatch(data={"message": message.content, "user": message.author.name})
@@ -101,6 +100,38 @@ class Bot(commands.Bot):
     @commands.command()
     async def water(self, ctx: commands.Context) -> None:
         await ctx.send(f"{ctx.author.name} watered their plant!")
+        
+        async with self.pool.acquire() as connection:
+            await connection.execute("UPDATE plants SET water = ?", "True")
+            # TESTING PURPOSES ONLY
+            # await connection.execute(
+            #             "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
+            #             ctx.author.name, 1, "False", "False", 1
+                    # )
+
+            user_plant = await connection.fetchone("SELECT username, cycle, water FROM plants WHERE username = $1", ctx.author.name)
+            if len(user_plant) > 0 and user_plant != "NULL":
+                user_cycle = user_plant[1]
+                water = bool(user_plant[2])
+                if user_cycle == 1:
+                    user_cycle = 2
+                    # image += 1
+                elif user_cycle == 2:
+                    if water:
+                        user_cycle = 4
+                    else:
+                        user_cycle = 3
+                elif user_cycle == 3:
+                    if water:
+                        user_cycle = 2
+                    else:
+                        user_cycle = 4
+                await connection.execute("UPDATE plants SET cycle = ?, water = ? WHERE username = ?", user_cycle, "False", ctx.author.name)
+                if user_cycle == 4:
+                    print("death")
+                    # await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ?", None, None, None, None, None)
+            else:
+                print("No plant yet!")
 
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
@@ -135,14 +166,6 @@ class Bot(commands.Bot):
             #     print("user already has a plant :D")
 
     # self.server.dispatch({"operation": "step"})
-
-    @commands.command()
-    async def water(self, ctx: commands.Context) -> None:
-        # async with self.pool.acquire() as connection:
-            # await connection.execute("SELECT username FROM plants WHERE username = ?", [ctx.author.name])
-            # if connection.fetchone() == None:
-            #     await ctx.send(f'{ctx.author.name} doesn\'t have a plant')
-        await ctx.send(f'{ctx.author.name} watered their plant!')
 
     ## GAME LOGIC BELOW ##
     ## sends data {'operation': 'step'} ##
