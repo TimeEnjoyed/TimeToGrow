@@ -98,50 +98,53 @@ class Bot(commands.Bot):
         print(error)
 
     @commands.command()
-    async def water(self, ctx: commands.Context) -> None:        
+    async def water(self, ctx: commands.Context) -> None:
         async with self.pool.acquire() as connection:
             username = ctx.author.name.lower()
             # TESTING PURPOSES ONLY
             # await connection.execute("UPDATE plants SET username = ? WHERE rowid = ?", username, 8)
             user_plant = await connection.fetchone("SELECT cycle, water, sabotage, growth_cycle FROM plants WHERE username = ?", username)
             water_cycle, water, sabotage, growth_cycle = user_plant
-            water = bool(water)
-            sabotage = bool(sabotage)
-            if user_plant is not None:
-                if not sabotage and not water:
-                    if water_cycle == 1:
-                        water_cycle = 2
-                        growth_cycle += 1
-                        await ctx.send(f"{ctx.author.name} watered their plant!")
-                    elif water_cycle == 2:
-                        water_cycle = 1
-                        await ctx.send(f"{ctx.author.name} watered their plant!")
-                    elif water_cycle == 3:
-                        water_cycle = 2
-                        await ctx.send(f"{ctx.author.name} watered their plant!")
-                    elif water_cycle == 4:
-                        await ctx.send(f"{ctx.author.name}'s plant DIED! D:")
-                        await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ? WHERE username = ?", None, None, None, None, None, username)
-                    await connection.execute("UPDATE plants SET cycle = ?, water = ?, growth_cycle = ? WHERE username = ?", water_cycle, True, growth_cycle, username)
-                elif water:
-                    if water_cycle == 1:
-                        water_cycle = 3
-                    elif water_cycle == 2:
-                        water_cycle = 3
-                        await ctx.send(f"{ctx.author.name} is drowning their plant")
-                    elif water_cycle == 3:
-                        water_cycle = 4
-                        await ctx.send(f"{ctx.author.name} is drowning their plant")
-                    elif water_cycle == 4:
-                        await ctx.send(f"{ctx.author.name} plant is drowned T_T!")
-                        await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ? WHERE username = ?", None, None, None, None, None, username)
-                else:
-                    await ctx.send(f"{ctx.author.name} plant is covered from the water!")
-                    sabotage = False
-                    await connection.execute("UPDATE plants SET sabotage = ?", False)
-            else:
-                pass
-                # await ctx.send(f"{ctx.author.name} doesn't have a plant!")
+            # if user_plant is not None:
+            if not user_plant:
+                await ctx.send(f"{ctx.author.name} doesn't have a plant!")
+                return
+        if not sabotage and not water:  # sabotage = 0, water 0
+            if water_cycle == 1:   # plant grows by default
+                water_cycle = 2    # moves on
+                growth_cycle += 1  # moves on
+                await ctx.send(f"{ctx.author.name} watered their plant!")
+            elif water_cycle == 2: # plant is thirsty and requires water
+                water_cycle = 1    # plant grows
+                await ctx.send(f"{ctx.author.name} watered their plant!")
+            elif water_cycle == 3:
+                water_cycle = 2
+                await ctx.send(f"{ctx.author.name} watered their plant!")
+            elif water_cycle == 4:
+                await ctx.send(f"{ctx.author.name}'s plant DIED! D:")
+                await connection.execute("UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ? WHERE username = ?", None, 1, 0, 0, 0, username)
+                return
+            await connection.execute("UPDATE plants SET cycle = ?, water = ?, growth_cycle = ? WHERE username = ?", water_cycle, 1, growth_cycle, username)
+        elif water:  # sabotage = 0, water is 1
+            if water_cycle == 1:  # watered too early
+                water_cycle = 3   # oopsies
+            elif water_cycle == 2:  # perfect timing, you get to move on
+                water_cycle = 1     # things grow
+                await ctx.send(f"{ctx.author.name} is drowning their plant")
+            elif water_cycle == 3:
+                water_cycle = 4
+                await ctx.send(f"{ctx.author.name} is drowning their plant")
+            elif water_cycle == 4:
+                water_cycle = 1
+                await ctx.send(f"{ctx.author.name} plant is drowned T_T!")
+                await connection.execute("UPDATE plants SET username = ? WHERE username = ?", None, username)
+                return
+            await connection.execute("UPDATE plants SET cycle = ? WHERE username = ?", water_cycle, username)
+        else:
+            await ctx.send(f"{ctx.author.name} plant is covered from the water!")
+            sabotage = 0
+            await connection.execute("UPDATE plants SET sabotage = ?", sabotage)
+            return
 
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
         assert self.server
@@ -199,6 +202,32 @@ class Bot(commands.Bot):
                             # TODO: refund points
                     else:
                         print(f"{username}, sorry there are no spots left")
+
+        if reward.title == 'SABOTAGE PLANT':
+            async with self.pool.acquire() as connection:
+                print('connection established with sqlite database')
+
+                # check if selected username (to sabotage) exists:
+                # if exists, get sabotage
+                check_username_cursor = await connection.execute(
+                    "SELECT sabotage FROM plants WHERE username=$1", text_input)
+                sabotage_or_nonetype = await check_username_cursor.fetchone()
+
+                if sabotage_or_nonetype is not None:
+                    # checks if sabotage is true. if so, they've already been sabotaged
+                    if sabotage_or_nonetype[0] == 1:
+                        print(f"{text_input} has already been sabotaged")
+                    # if sabotage is false, make it true, update database.
+                    else:
+                        sabotage = 1
+                        await connection.execute(
+                            "UPDATE plants SET sabotage = $1 WHERE username=$2",
+                            sabotage, text_input)
+
+                else:
+                    print(f"sorry {username}, but {text_input} doesn't have a plant to sabotage")
+
+
 
 
 

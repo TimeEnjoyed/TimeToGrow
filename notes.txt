@@ -37,7 +37,7 @@ Feature creep:
 
 TODO:
 [x] - finish database
-[timeenjoyed] - if null exists in
+[x] - if null exists
 CREATE TABLE IF NOT EXISTS plants (
     rowid INTEGER PRIMARY KEY,
     username TEXT,
@@ -70,7 +70,11 @@ growth_cycles: int = 1 - 8
             3 waits for water. 1) water = True > 2; 2) water= False -> 4
             4 death
 
-     - if someone waters their plant first, and then it gets sabotaged = nothing happens
+     - if someone waters their plant first, and then it gets sabotaged = cycle doens't change
+        1, cycle = 2, water = False
+        2, cycle = 2, water = True, sabotage = True
+        3, cycle = 2, water = False, sabotage = False
+            ^ user needs to water again
       - if someone sabotages first, then waters it = -1 cycle
 
 [] - twitchio.routines (sends to frontend every 1 min)
@@ -79,7 +83,7 @@ growth_cycles: int = 1 - 8
 
 [bunnie] - function that responds to water-text command
 
-[timeenjoyed] - sabotage - functions that responds
+[x] - sabotage - functions that responds
 
 
 
