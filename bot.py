@@ -156,20 +156,46 @@ class Bot(commands.Bot):
             async with self.pool.acquire() as connection:
                 print('connection established with sqlite database')
 
-                # existing_usernames = await connection.fetchall(
-                #     "SELECT COUNT(*) FROM plants WHERE username=($1)", username)
+                # retrieve current number of rows in plants table:
+                count_rows_cursor = await connection.execute(
+                    "SELECT COUNT(*) FROM plants")
+                num_rows_tuple = await count_rows_cursor.fetchone()
+                num_rows = num_rows_tuple[0]
+
+                # retrieve rowid of null username:
+                null_username_cursor = await connection.execute(
+                    "SELECT rowid FROM plants WHERE username IS NULL LIMIT 1")
+                avail_rowid_or_nonetype = await null_username_cursor.fetchone()
+
+                # checks that database doesn't exceed certain size
+                if num_rows < self.rows:
+                    try:
+                        # adds a new row to the table
+                        await connection.execute(
+                            "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
+                            username.lower(), cycle, water, sabotage, growth_cycle)
+                    except:
+                        print(f"{username}, ONE looks like you already have a plant")
+                        # TODO: refund points
+
+                else:
+                    # checks for and retrieves available rowid for new username insertion
+                    if avail_rowid_or_nonetype is not None:
+                        avail_rowid = avail_rowid_or_nonetype[0]
+                        # add person to plants table with available rowid
+                        try:
+                            await connection.execute(
+                                "UPDATE plants SET username = $1, cycle = $2, water = $3, sabotage = $4, growth_cycle = $5 WHERE rowid = $6",
+                                username.lower(), cycle, water, sabotage, growth_cycle, avail_rowid)
+                        except Exception as e:
+                            print(e)
+                            print(f"{username}, TWO looks like you already have a plant")
+                            # TODO: refund points
+                    else:
+                        print(f"{username}, sorry there are no spots left")
 
 
-                    # below format is sanitized inserts. (not f-string or .format)
-                    # anytime we deal with database, us $1 format
-                await connection.execute(
-                    "INSERT INTO plants(username, cycle, water, sabotage, growth_cycle) VALUES($1, $2, $3, $4, $5)",
-                    [username.lower(), cycle, water, sabotage, growth_cycle]
-                )
-            # else:
-            #     print("user already has a plant :D")
 
-    # self.server.dispatch({"operation": "step"})
 
     ## GAME LOGIC BELOW ##
     ## sends data {'operation': 'step'} ##
