@@ -103,7 +103,6 @@ class Bot(commands.Bot):
 
     @commands.command()
     async def water(self, ctx: commands.Context) -> None:
-        print("hello?")
         async with self.pool.acquire() as connection:
             username = ctx.author.name.lower()
             # TESTING PURPOSES ONLY
@@ -284,7 +283,6 @@ class Bot(commands.Bot):
                     "sabotage": row[4],
                     "growth_cycle": row[5]}
 
-                print(f"its been 1 mins")
                 ground.append(plant)
 
             # loop through old ground, add grwoth_cycle to it. IF.......
@@ -324,16 +322,16 @@ class Bot(commands.Bot):
                     plant['username'] = None
         async with self.pool.acquire() as connection:
             for row in plant_rows:
-                rowid = row[0],
-                username = row[1],
-                cycle = row[2],
-                water = row[3],
-                sabotage = row[4],
+                rowid = row[0]
+                username = row[1]
+                cycle = row[2]
+                water = row[3]
+                sabotage = row[4]
                 growth_cycle = row[5]
-
                 await connection.execute(
                     "UPDATE plants SET username = $1, cycle = $2, water = $3, sabotage = $4, growth_cycle = $5 WHERE rowid = $6",
                                 username.lower(), cycle, water, sabotage, growth_cycle, rowid)
+        print(f"its been 1 mins")
         self.server.dispatch(data=ground)
 
         # await ctx.send(f"{ctx.author.name}data sent")

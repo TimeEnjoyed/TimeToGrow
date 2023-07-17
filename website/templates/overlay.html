@@ -1,23 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <script src="javascript\overlay.js" defer></script>
     <title>Time to Grow</title>
 </head>
 
-<!--<script>-->
-<!--    const event = new EventSource("/overlay_endpoint")-->
-
-<!--    event.onmessage = function(event){-->
-<!--        }-->
-<!--</script>-->
-
 <body>
-    <div id="container">
-        <div id="planter">
-            <script>
+    <div class="container">
+        <div class="planter">
+            <div class="plant"></div>
+            <!-- <script>
                 const eventSource = new EventSource("/overlay_endpoint");
                     const planter = document.getElementById("planter");
 
@@ -44,8 +40,9 @@
                         planter.appendChild(div);
                     });
                 });
-            </script>
+            </script> -->
         </div>
     </div>
 </body>
+
 </html>

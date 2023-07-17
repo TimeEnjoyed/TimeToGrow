@@ -61,7 +61,7 @@ class Server(Starlette):
                 Mount("/html", StaticFiles(directory="website/templates"), name="html"),
                 # Allows index.html to be launched through starlette
                 Mount("/css", StaticFiles(directory="website/static/css"), name="css"),
-                # Mount("/javascript", StaticFiles(directory="website/static/javascript"), name="javascript")
+                Mount("/javascript", StaticFiles(directory="website/static/javascript"), name="javascript")
             ],
             on_startup=[self.on_ready],
         )
