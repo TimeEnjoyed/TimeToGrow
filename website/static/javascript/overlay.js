@@ -1,12 +1,30 @@
 const eventSource = new EventSource("/overlay_endpoint");
-const planter = document.querySelector("planter");
-const container = document.querySelector("container");
+const planter = document.querySelector(".planter");
+const container = document.querySelector(".container");
+const plant_amt = 25
+
+//Iterates through the amount of plants available and assigns id to match rowid in data
+for (let x = 1; x <= plant_amt; x++) {
+    const plant_img = document.createElement("img");
+    let plant = document.createElement("div");
+    plant_img.src = "images/Hole.png";
+    plant_img.setAttribute("id", x);
+    plant.setAttribute("class", "plant");
+    plant.appendChild(plant_img);
+    planter.appendChild(plant);
+}
 
 eventSource.addEventListener("message", function (event) {
     // Parse the received JSON data
     const data = JSON.parse(event.data);
     console.log(data)
-  
+    
+    // assigns variables to the data received to run through checks
+    for (const dict_data of data) {
+        const rowid = dict_data.rowid;
+        const username = dict_data.username;
+        const growth_cycle = dict_data.growth_cycle;
+    }
     // // Iterate over each object in the array
     // data.forEach(function (item) {
     //     // Create a new <div> element
@@ -24,17 +42,8 @@ eventSource.addEventListener("message", function (event) {
 
     //     // Append the <div> element to the container
     //     // planter.appendChild(div);
-
-    // Iterates over each object of dictionary and assigns a variable to the value
-    for (const dict_data of data) {
-        // Adds image to the body and assigns the plant class to it.
-        // Currently just continues to add everyloop and places images in body not in parent classes, will continue to work on this as well as refactor it
-        const plant_img = document.createElement("img");
-        plant_img.src = "images/Hole.png";
-        plant_img.setAttribute("class", "plant")
-        document.body.appendChild(plant_img)
-    }
     // });
+    // Iterates over each object of dictionary and assigns a variable to the value
 });
 
 // Need to write out logic so that 

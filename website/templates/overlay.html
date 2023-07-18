@@ -12,35 +12,6 @@
 <body>
     <div class="container">
         <div class="planter">
-            <div class="plant"></div>
-            <!-- <script>
-                const eventSource = new EventSource("/overlay_endpoint");
-                    const planter = document.getElementById("planter");
-
-                    eventSource.addEventListener("message", function (event) {
-                        // Parse the received JSON data
-                        const data = event.data;
-                        console.log(data)
-
-                        // Iterate over each object in the array
-                        data.forEach(function (item) {
-                        // Create a new <div> element
-                        const div = document.createElement("div");
-
-                        // Generate a unique ID based on the 'rowid' key
-                        const divId = "div-" + item.rowid;
-
-                        // Set the ID attribute of the <div> element
-                        div.setAttribute("id", divId);
-
-                        // Set the content of the <div> element
-                        div.textContent = JSON.stringify(item);
-
-                        // Append the <div> element to the container
-                        planter.appendChild(div);
-                    });
-                });
-            </script> -->
         </div>
     </div>
 </body>
