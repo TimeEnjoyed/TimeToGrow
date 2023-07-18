@@ -26,6 +26,17 @@ html, body {
 .plant {
     flex-grow: 1;
     align-items: flex-end;
+    position: relative;
+}
+
+.username {
+    font-family: Arial, Helvetica, sans-serif;
+    position: center;
+    color: darkgreen;
+    position: absolute;
+    top: 10px;
+    font-size: 10px;
+    font-size: 1vw;
 }
 
 img {

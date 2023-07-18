@@ -1,16 +1,17 @@
 const eventSource = new EventSource("/overlay_endpoint");
 const planter = document.querySelector(".planter");
 const container = document.querySelector(".container");
-const plant_amt = 25
+const plantAmt = 15
 
 //Iterates through the amount of plants available and assigns id to match rowid in data
-for (let x = 1; x <= plant_amt; x++) {
-    const plant_img = document.createElement("img");
-    let plant = document.createElement("div");
-    plant_img.src = "images/Hole.png";
-    plant_img.setAttribute("id", x);
+for (let x = 1; x <= plantAmt; x++) {
+    const plantImg = document.createElement("img");
+    const plant = document.createElement("div");
+    plantImg.src = "images/Hole.png";
+    plantImg.setAttribute("id", "plant"+x)
+    plant.setAttribute("id", x);
     plant.setAttribute("class", "plant");
-    plant.appendChild(plant_img);
+    plant.appendChild(plantImg);
     planter.appendChild(plant);
 }
 
@@ -21,10 +22,40 @@ eventSource.addEventListener("message", function (event) {
     
     // assigns variables to the data received to run through checks
     for (const dict_data of data) {
-        const rowid = dict_data.rowid;
+        const rowId = dict_data.rowid;
         const username = dict_data.username;
-        const growth_cycle = dict_data.growth_cycle;
+        const growthCycle = dict_data.growth_cycle;
+        const water = dict_data.water;
+    let plantId = document.getElementById(rowId);
+    let nameText = document.getElementById(username);
+    // checks if the user has a plant on the board and if not adds their plant.
+    if (nameText == null && username != null) {
+        nameText = document.createElement("p");
+        nameText.setAttribute("class", "username");
+        nameText.setAttribute("id", username);
+        nameText.innerText = username;
+        plantId.appendChild(nameText);
+        plantImg = document.getElementById("plant"+rowId);
+        plantImg.src = `images/Step1.png`;
     }
+    // updates image for the user to the growth cycle it is on
+    if (nameText == document.getElementById(username) && username != null) {//&& (water == 1)) {
+        plantImg = document.getElementById("plant"+rowId)
+        plantImg.src = `images/Step${growthCycle}.png`
+    }
+    // checks if name text exists and if username does not (logic currently does not work if username is null) removes the name from overlay and sets back to a hole
+    if (nameText == document.getElementById(username)  && username == null) {
+        nameText.remove();
+        plantImg = document.getElementById("plant"+rowId)
+        plantImg.src = `images/Hole.png`
+    }
+}
+    // needs to check if there is a user name
+    // needs to check for row id and change image to match the growth cycle.
+
+
+
+
     // // Iterate over each object in the array
     // data.forEach(function (item) {
     //     // Create a new <div> element
@@ -45,5 +76,3 @@ eventSource.addEventListener("message", function (event) {
     // });
     // Iterates over each object of dictionary and assigns a variable to the value
 });
-
-// Need to write out logic so that 

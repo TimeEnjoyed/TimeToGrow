@@ -90,11 +90,11 @@ class Bot(commands.Bot):
         self.server.dispatch(data={"message": message.content, "user": message.author.name})
 
         # example of adding something to database:
-        async with self.pool.acquire() as connection:
-            # below format is sanitized inserts. (not f-string or .format)
-            # anytime we deal with database, us $1 format
-            await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
-        await self.handle_commands(message)
+        # async with self.pool.acquire() as connection:
+        #     # below format is sanitized inserts. (not f-string or .format)
+        #     # anytime we deal with database, us $1 format
+        #     await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
+        # await self.handle_commands(message)
 
     async def event_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
