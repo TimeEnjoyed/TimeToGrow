@@ -94,7 +94,7 @@ class Bot(commands.Bot):
         #     # below format is sanitized inserts. (not f-string or .format)
         #     # anytime we deal with database, us $1 format
         #     await connection.execute("INSERT INTO messages(content) VALUES($1)", message.content)
-        # await self.handle_commands(message)
+        await self.handle_commands(message)
 
     async def event_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
@@ -107,14 +107,15 @@ class Bot(commands.Bot):
             username = ctx.author.name.lower()
             # TESTING PURPOSES ONLY
             # await connection.execute("UPDATE plants SET username = ? WHERE rowid = ?", username, 8)
-            user_plant = await connection.fetchone(
-                "SELECT cycle, water, sabotage, growth_cycle FROM plants WHERE username = ?", username)
-            water_cycle, water, sabotage, growth_cycle = user_plant
-            # if user_plant is not None:
-            if not user_plant:
+            try:
+                user_plant = await connection.fetchone(
+                    "SELECT cycle, water, sabotage, growth_cycle FROM plants WHERE username = ?", username)
+                water_cycle, water, sabotage, growth_cycle = user_plant
+            except:
                 await ctx.send(f"{ctx.author.name} doesn't have a plant!")
                 return
         if not sabotage and not water:  # sabotage = 0, water 0
+            print("hi")
             if water_cycle == 1:  # plant grows by default
                 water_cycle = 2  # moves on
                 growth_cycle += 1  # moves on
@@ -330,9 +331,10 @@ class Bot(commands.Bot):
                 growth_cycle = row[5]
                 await connection.execute(
                     "UPDATE plants SET username = $1, cycle = $2, water = $3, sabotage = $4, growth_cycle = $5 WHERE rowid = $6",
-                                username.lower(), cycle, water, sabotage, growth_cycle, rowid)
+                                username, cycle, water, sabotage, growth_cycle, rowid)
         print(f"its been 1 mins")
         self.server.dispatch(data=ground)
+        # TODO something is happening around here where the growth cycle of index > 1 is adding to growth cycle even without them watering
 
         # await ctx.send(f"{ctx.author.name}data sent")
 

@@ -8,7 +8,7 @@ for (let x = 1; x <= plantAmt; x++) {
     const plantImg = document.createElement("img");
     const plant = document.createElement("div");
     plantImg.src = "images/Hole.png";
-    plantImg.setAttribute("id", "plant"+x)
+    plantImg.setAttribute("id", `plant${x}`)
     plant.setAttribute("id", x);
     plant.setAttribute("class", "plant");
     plant.appendChild(plantImg);
@@ -19,60 +19,36 @@ eventSource.addEventListener("message", function (event) {
     // Parse the received JSON data
     const data = JSON.parse(event.data);
     console.log(data)
-    
+
     // assigns variables to the data received to run through checks
     for (const dict_data of data) {
         const rowId = dict_data.rowid;
         const username = dict_data.username;
         const growthCycle = dict_data.growth_cycle;
         const water = dict_data.water;
-    let plantId = document.getElementById(rowId);
-    let nameText = document.getElementById(username);
-    // checks if the user has a plant on the board and if not adds their plant.
-    if (nameText == null && username != null) {
-        nameText = document.createElement("p");
-        nameText.setAttribute("class", "username");
-        nameText.setAttribute("id", username);
-        nameText.innerText = username;
-        plantId.appendChild(nameText);
-        plantImg = document.getElementById("plant"+rowId);
-        plantImg.src = `images/Step1.png`;
+        let plantId = document.getElementById(rowId);
+        let nameText = document.getElementById(`user${rowId}`);
+        // checks if the user has a plant on the board and if not adds their plant.
+        if (nameText == null && username != null) {
+            nameText = document.createElement("p");
+            nameText.setAttribute("class", "username");
+            nameText.setAttribute("id", `user${rowId}`);
+            nameText.innerText = username;
+            plantId.appendChild(nameText);
+            plantImg = document.getElementById(`plant${rowId}`);
+            plantImg.src = `images/Step1.png`;
+        }
+        // checks if name text exists and if username does not (logic currently does not work if username is null) removes the name from overlay and sets back to a hole
+        else if (username == null && document.getElementById(`user${rowId}`) != null) {
+            console.log(nameText)
+            nameText.remove()
+            plantImg = document.getElementById(`plant${rowId}`);
+            plantImg.src = `images/Hole.png`;
+        }
+        // updates image for the user to the growth cycle it is on
+        else if (username != null && document.getElementById(`user${rowId}`) != null && water == 1) {
+            plantImg = document.getElementById(`plant${rowId}`);
+            plantImg.src = `images/Step${growthCycle}.png`;
+        }
     }
-    // updates image for the user to the growth cycle it is on
-    if (nameText == document.getElementById(username) && username != null) {//&& (water == 1)) {
-        plantImg = document.getElementById("plant"+rowId)
-        plantImg.src = `images/Step${growthCycle}.png`
-    }
-    // checks if name text exists and if username does not (logic currently does not work if username is null) removes the name from overlay and sets back to a hole
-    if (nameText == document.getElementById(username)  && username == null) {
-        nameText.remove();
-        plantImg = document.getElementById("plant"+rowId)
-        plantImg.src = `images/Hole.png`
-    }
-}
-    // needs to check if there is a user name
-    // needs to check for row id and change image to match the growth cycle.
-
-
-
-
-    // // Iterate over each object in the array
-    // data.forEach(function (item) {
-    //     // Create a new <div> element
-    //     const div = document.createElement("div");
-
-    //     // Generate a unique ID based on the 'rowid' key
-    //     const divId = "div-" + item.rowid;
-
-    //     // Set the ID attribute of the <div> element
-    //     div.setAttribute("id", divId);
-
-    //     // Set the content of the <div> element
-    //     div.textContent = JSON.stringify(item);
-    //     console.log(item)
-
-    //     // Append the <div> element to the container
-    //     // planter.appendChild(div);
-    // });
-    // Iterates over each object of dictionary and assigns a variable to the value
 });
