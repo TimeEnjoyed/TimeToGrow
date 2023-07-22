@@ -87,7 +87,7 @@ class Bot(commands.Bot):
             return
 
         assert self.server
-        self.server.dispatch(data={"message": message.content, "user": message.author.name})
+        # self.server.dispatch(data={"message": message.content, "user": message.author.name})
 
         # example of adding something to database:
         # async with self.pool.acquire() as connection:
@@ -105,8 +105,6 @@ class Bot(commands.Bot):
     async def water(self, ctx: commands.Context) -> None:
         async with self.pool.acquire() as connection:
             username = ctx.author.name.lower()
-            # TESTING PURPOSES ONLY
-            # await connection.execute("UPDATE plants SET username = ? WHERE rowid = ?", username, 8)
             try:
                 user_plant = await connection.fetchone(
                     "SELECT cycle, water, sabotage, growth_cycle FROM plants WHERE username = ?", username)
@@ -115,44 +113,42 @@ class Bot(commands.Bot):
                 await ctx.send(f"{ctx.author.name} doesn't have a plant!")
                 return
         if not sabotage and not water:  # sabotage = 0, water 0
-            print("hi")
-            if water_cycle == 1:  # plant grows by default
+            water = 1
+            if water_cycle == 1 or growth_cycle == 1:  # plant grows by default
                 water_cycle = 2  # moves on
                 growth_cycle += 1  # moves on
-                await ctx.send(f"{ctx.author.name} watered their plant!")
+                await ctx.send(f"{ctx.author.name} watered their plant but it's a little early so the plant isn't thirsty yet!")
             elif water_cycle == 2:  # plant is thirsty and requires water
                 water_cycle = 1  # plant grows
                 await ctx.send(f"{ctx.author.name} watered their plant!")
             elif water_cycle == 3:
                 water_cycle = 2
-                await ctx.send(f"{ctx.author.name} watered their plant!")
+                await ctx.send(f"{ctx.author.name} watered their plant but it's too late so it won't grow this time!")
             elif water_cycle == 4:
-                await ctx.send(f"{ctx.author.name}'s plant DIED! D:")
-                await connection.execute(
-                    "UPDATE plants SET username = ?, cycle = ?, water = ?, sabotage = ?, growth_cycle = ? WHERE username = ?",
-                    None, 1, 0, 0, 0, username)
+                await ctx.send(f"{ctx.author.name} plant is DEAD T_T!")
+                username = None
+                water_cycle = 1
+                water = 0
+                sabotage = 0
                 return
-            await connection.execute("UPDATE plants SET cycle = ?, water = ?, growth_cycle = ? WHERE username = ?",
-                                     water_cycle, 1, growth_cycle, username)
+            await connection.execute("UPDATE plants SET cycle = ?, water = ?, growth_cycle = ? WHERE username = ?", water_cycle, water, growth_cycle, username)
         elif water:  # sabotage = 0, water is 1
             if water_cycle == 1:  # watered too early
                 water_cycle = 3  # oopsies
             elif water_cycle == 2:  # perfect timing, you get to move on
-                water_cycle = 1  # things grow
+                water_cycle = 3  # things grow
                 await ctx.send(f"{ctx.author.name} is drowning their plant")
-            elif water_cycle == 3:
-                water_cycle = 4
+            elif water_cycle == 3: # plant is super thirsty and will go back a cycle but not grow
+                water_cycle = 3
                 await ctx.send(f"{ctx.author.name} is drowning their plant")
             elif water_cycle == 4:
-                water_cycle = 1
-                await ctx.send(f"{ctx.author.name} plant is drowned T_T!")
-                await connection.execute("UPDATE plants SET username = ? WHERE username = ?", None, username)
+                await ctx.send(f"{ctx.author.name} drowned their plant!")
 
             await connection.execute("UPDATE plants SET cycle = ? WHERE username = ?", water_cycle, username)
         else:
             await ctx.send(f"{ctx.author.name} plant is covered from the water!")
-            sabotage = 0
-            await connection.execute("UPDATE plants SET sabotage = ?", sabotage)
+            # sabotage = 0
+            # await connection.execute("UPDATE plants SET sabotage = ? WHERE username = ?", sabotage, username)
             return
 
     async def event_pubsub_channel_points(self, event: pubsub.PubSubChannelPointsMessage) -> None:
@@ -166,6 +162,7 @@ class Bot(commands.Bot):
         else:
             channel = self.get_channel(channel_info)
         print(channel)
+
 
         reward: twitchio.CustomReward = event.reward
 
@@ -181,8 +178,8 @@ class Bot(commands.Bot):
 
         if reward.title == 'PLANT SEED':
             async with self.pool.acquire() as connection:
-                print('connection established with sqlite database')
-                await channel.send(f"connection established with sqlite database")
+                # print('connection established with sqlite database')
+                # await channel.send(f"connection established with sqlite database")
 
                 # retrieve current number of rows in plants table:
                 count_rows_cursor = await connection.execute(
@@ -224,32 +221,34 @@ class Bot(commands.Bot):
 
         if reward.title == 'SABOTAGE PLANT':
             async with self.pool.acquire() as connection:
-                print('connection established with sqlite database')
+                # print('connection established with sqlite database')
 
                 # get water and sabotage status:
-                water_and_sabotage = await connection.fetchone(
-                    "SELECT water, sabotage FROM plants WHERE username=$1", text_input)
-                water = water_and_sabotage[0]
-                sabotage = water_and_sabotage[1]
+                try:
+                    water_and_sabotage = await connection.fetchone(
+                        "SELECT water, sabotage FROM plants WHERE username=$1", text_input)
+                    water = water_and_sabotage[0]
+                    sabotage = water_and_sabotage[1]
 
-                if not water_and_sabotage:
-                    await channel.send(f"nice try {username}, {text_input} doesn't have a plant. pay attention!")
-
-                if water and not sabotage:
-                    # checks if sabotage is true. if so, they've already been sabotaged
-                    await channel.send(f"sorry {username}, {text_input} watered their plant already")
-                    # if sabotage is false, make it true, update database.
-                if not water and not sabotage:
-                    sabotage = 1
-                    await connection.execute(
-                        "UPDATE plants SET sabotage = $1 WHERE username=$2",
-                        sabotage, text_input)
-                if sabotage:
-                    await channel.send(f"woops {username}, {text_input} has been sabotaged already")
-
-                else:
-                    print(f"sorry {username}, but {text_input} doesn't have a plant to sabotage")
-                return
+                    if username != text_input:
+                        if water and not sabotage:
+                            # checks if sabotage is true. if so, they've already been sabotaged
+                            await channel.send(f"Sorry {username}, {text_input} watered their plant already")
+                            # if sabotage is false, make it true, update database.
+                        elif not water:
+                            sabotage = 1
+                            await channel.send(f"{text_input} has been sabotaged by {username}!")
+                            await connection.execute(
+                                "UPDATE plants SET sabotage = $1 WHERE username=$2",
+                                sabotage, text_input)
+                        elif sabotage:
+                            await channel.send(f"Whoops {username}, {text_input} has been sabotaged already")
+                    else:
+                        await channel.send(f"Uhh, you want to sabotage yourself? Sorry you can't do that!")
+                        return
+                except Exception as e:
+                    await channel.send(f"Nice try {username}, {text_input} doesn't have a plant to sabotage. Pay attention!")
+                
 
     # GAME LOGIC BELOW ##
     # sends data {'operation': 'step'} ##
@@ -283,58 +282,56 @@ class Bot(commands.Bot):
                     "water": row[3],
                     "sabotage": row[4],
                     "growth_cycle": row[5]}
-
+                
                 ground.append(plant)
 
-            # loop through old ground, add grwoth_cycle to it. IF.......
+            # loop through old ground, add growth_cycle to it. IF.......
             for plant in ground:
                 print(plant)
                 # first cycle, where (no water and no sabotage) --> moves onto cycle 2
                 if plant['cycle'] == 1:
-                    if plant['water']:
-                        plant['cycle'] = 1
-                    if plant['sabotage'] == 1:
-                        plant['cycle'] = 1
-                    if not plant['water'] and not plant['sabotage']:
+                    if not plant['water']:
                         plant['cycle'] = 2
+                        if plant['sabotage']:
+                            if plant['growth_cycle'] > 1:
+                                plant['growth_cycle'] -= 1
+                    if plant['growth_cycle'] == 1:
                         plant['growth_cycle'] += 1
-                # second cycle, where plant is thirsty. water + no sabotage --> moves onto cycle 1
+                # second cycle, where plant is thirsty
                 elif plant['cycle'] == 2:
-                    if plant['water'] and not plant['sabotage']:
-                        plant['cycle'] = 1
-                    if not plant['water'] and plant['sabotage']:
-                        plant['cycle'] = 2
-                    if plant['water'] and plant['sabotage']:
-                        plant['cycle'] = 2
                     if not plant['water']:
                         plant['cycle'] = 3
+                        if plant['sabotage']:
+                            if plant['growth_cycle'] > 1:
+                                plant['growth_cycle'] -= 1
                 # plant is about to die if you don't water it
-                if plant['cycle'] == 3:
+                elif plant['cycle'] == 3:
                     if not plant['water']:
-                        plant['username'] = None
                         plant['cycle'] = 4
-                    if plant['water']:
-                        plant['cycle'] = 1
-                    if plant['water'] and plant['sabotage']:
-                        plant['cycle'] = 3
-                # fourth cycle - plant is dead. open spot available.
-                # waiting for new plant owner with default settings.
-                if plant['cycle'] == 4:
+                        if plant['sabotage']:
+                            if plant['growth_cycle'] > 1:
+                                plant['growth_cycle'] -= 1
+                elif plant['cycle'] == 4:
                     plant['username'] = None
-        async with self.pool.acquire() as connection:
-            for row in plant_rows:
-                rowid = row[0]
-                username = row[1]
-                cycle = row[2]
-                water = row[3]
-                sabotage = row[4]
-                growth_cycle = row[5]
+        # async with self.pool.acquire() as connection:
+                rowid = plant['rowid']
+                username = plant['username']
+                cycle = plant['cycle']
+                if cycle == 4:
+                    username = None
+                growth_cycle = plant['growth_cycle']
                 await connection.execute(
-                    "UPDATE plants SET username = $1, cycle = $2, water = $3, sabotage = $4, growth_cycle = $5 WHERE rowid = $6",
-                                username, cycle, water, sabotage, growth_cycle, rowid)
+                    "UPDATE plants SET username = $1, cycle = $2, growth_cycle = $3 WHERE rowid = $6", username, cycle, growth_cycle, rowid)
         print(f"its been 1 mins")
         self.server.dispatch(data=ground)
         # TODO something is happening around here where the growth cycle of index > 1 is adding to growth cycle even without them watering
+        async with self.pool.acquire() as connection:
+            for row in plant_rows:
+                rowid = row[0]
+                water = 0
+                sabotage = 0
+                await connection.execute(
+                    "UPDATE plants SET water = $1, sabotage = $2 WHERE rowid = $3", water, sabotage, rowid)
 
         # await ctx.send(f"{ctx.author.name}data sent")
 

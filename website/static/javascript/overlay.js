@@ -1,7 +1,7 @@
 const eventSource = new EventSource("/overlay_endpoint");
 const planter = document.querySelector(".planter");
 const container = document.querySelector(".container");
-const plantAmt = 15
+const plantAmt = 10
 
 //Iterates through the amount of plants available and assigns id to match rowid in data
 for (let x = 1; x <= plantAmt; x++) {
@@ -40,7 +40,6 @@ eventSource.addEventListener("message", function (event) {
         }
         // checks if name text exists and if username does not (logic currently does not work if username is null) removes the name from overlay and sets back to a hole
         else if (username == null && document.getElementById(`user${rowId}`) != null) {
-            console.log(nameText)
             nameText.remove()
             plantImg = document.getElementById(`plant${rowId}`);
             plantImg.src = `images/Hole.png`;
