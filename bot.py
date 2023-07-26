@@ -114,38 +114,38 @@ class Bot(commands.Bot):
                 return
         if not sabotage and not water:  # sabotage = 0, water 0
             water = 1
-            if water_cycle == 1 or growth_cycle == 1:  # plant grows by default
-                water_cycle = 2  # moves on
-                growth_cycle += 1  # moves on
-                await ctx.send(f"{ctx.author.name} watered their plant but it's a little early so the plant isn't thirsty yet!")
-            elif water_cycle == 2:  # plant is thirsty and requires water
-                water_cycle = 1  # plant grows
-                await ctx.send(f"{ctx.author.name} watered their plant!")
-            elif water_cycle == 3:
-                water_cycle = 2
-                await ctx.send(f"{ctx.author.name} watered their plant but it's too late so it won't grow this time!")
-            elif water_cycle == 4:
-                await ctx.send(f"{ctx.author.name} plant is DEAD T_T!")
-                username = None
-                water_cycle = 1
-                water = 0
-                sabotage = 0
-                return
-            await connection.execute("UPDATE plants SET cycle = ?, water = ?, growth_cycle = ? WHERE username = ?", water_cycle, water, growth_cycle, username)
+            if growth_cycle <= 9:
+                if water_cycle == 1: # initial cycle
+                    if growth_cycle == 1: # first round to give the plant a sprout
+                        growth_cycle += 1
+                        await ctx.send(f"{ctx.author.name} watered their plant!")
+                    else:
+                        water_cycle = 2  # moves on but doesn't grow
+                        await ctx.send(f"{ctx.author.name} watered their plant but it's a little early so the plant isn't thirsty yet!")
+                elif water_cycle == 2:  # plant is thirsty and requires water
+                    water_cycle = 1  # resets water cycle
+                    growth_cycle += 1  # plant grows
+                    await ctx.send(f"{ctx.author.name} watered their plant!")
+                elif water_cycle == 3: # too late by a cycle
+                    water_cycle = 2 # moves back to the growth cycle
+                    await ctx.send(f"{ctx.author.name} watered their plant but it's too late so it won't grow this time!")
+                elif water_cycle == 4: # plant already dead :(
+                    await ctx.send(f"{ctx.author.name} plant is DEAD T_T!")
+                    username = None
+                    water_cycle = 1
+                    water = 0
+                    sabotage = 0
+                    return
+                await connection.execute("UPDATE plants SET cycle = ?, water = ?, growth_cycle = ? WHERE username = ?", water_cycle, water, growth_cycle, username)
         elif water:  # sabotage = 0, water is 1
-            if water_cycle == 1:  # watered too early
+            if water_cycle == 1 or water_cycle == 2 or water_cycle == 3:  # watered more than once in a cycle
                 water_cycle = 3  # oopsies
-            elif water_cycle == 2:  # perfect timing, you get to move on
-                water_cycle = 3  # things grow
-                await ctx.send(f"{ctx.author.name} is drowning their plant")
-            elif water_cycle == 3: # plant is super thirsty and will go back a cycle but not grow
-                water_cycle = 3
                 await ctx.send(f"{ctx.author.name} is drowning their plant")
             elif water_cycle == 4:
                 await ctx.send(f"{ctx.author.name} drowned their plant!")
 
             await connection.execute("UPDATE plants SET cycle = ? WHERE username = ?", water_cycle, username)
-        else:
+        else: # plant was sabotaged before they could water
             await ctx.send(f"{ctx.author.name} plant is covered from the water!")
             # sabotage = 0
             # await connection.execute("UPDATE plants SET sabotage = ? WHERE username = ?", sabotage, username)
@@ -174,7 +174,7 @@ class Bot(commands.Bot):
         growth_cycle: int | None = 1
 
         print(f"{reward} and input: {text_input}")
-        self.server.dispatch(data={"username": username, "reward": reward})
+        # self.server.dispatch(data={"username": username, "reward": reward})
 
         if reward.title == 'PLANT SEED':
             async with self.pool.acquire() as connection:
@@ -284,10 +284,9 @@ class Bot(commands.Bot):
                     "growth_cycle": row[5]}
                 
                 ground.append(plant)
-
             # loop through old ground, add growth_cycle to it. IF.......
             for plant in ground:
-                print(plant)
+                # print(plant)
                 # first cycle, where (no water and no sabotage) --> moves onto cycle 2
                 if plant['cycle'] == 1:
                     if not plant['water']:
@@ -295,8 +294,9 @@ class Bot(commands.Bot):
                         if plant['sabotage']:
                             if plant['growth_cycle'] > 1:
                                 plant['growth_cycle'] -= 1
-                    if plant['growth_cycle'] == 1:
-                        plant['growth_cycle'] += 1
+                    # else:
+                    #     if plant['growth_cycle'] == 1:
+                    #         plant['growth_cycle'] += 1
                 # second cycle, where plant is thirsty
                 elif plant['cycle'] == 2:
                     if not plant['water']:
@@ -317,11 +317,12 @@ class Bot(commands.Bot):
                 rowid = plant['rowid']
                 username = plant['username']
                 cycle = plant['cycle']
-                if cycle == 4:
-                    username = None
+                # if cycle == 4:
+                #     username = None
                 growth_cycle = plant['growth_cycle']
                 await connection.execute(
                     "UPDATE plants SET username = $1, cycle = $2, growth_cycle = $3 WHERE rowid = $6", username, cycle, growth_cycle, rowid)
+                print(plant)
         print(f"its been 1 mins")
         self.server.dispatch(data=ground)
         # TODO something is happening around here where the growth cycle of index > 1 is adding to growth cycle even without them watering
