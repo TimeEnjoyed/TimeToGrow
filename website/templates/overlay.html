@@ -4,16 +4,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <link rel="stylesheet" type="text/css" href="css/style.css"/>
     <script src="javascript\overlay.js" defer></script>
     <title>Time to Grow</title>
 </head>
 
 <body>
-    <div class="container">
-        <div class="planter">
-        </div>
+<p style="font-size:60px" id="timer">:00</p>
+<!--<div class="container">-->
+<!--    <p style="font-size:60px" id="timer">:00</p>-->
+    <div class="planter" style="border: 1px solid red">
+
     </div>
+<script>
+    let minutes = 0;
+
+    function updateTimer() {
+        // Convert the minutes to a string with leading zeros if needed
+        let minutesString = minutes < 10 ? '0' + minutes : minutes;
+
+        // Update the timer display
+        document.getElementById("timer").innerHTML = ":" + minutesString;
+
+        // Increase the minutes
+        minutes++;
+
+        // Reset to 0 if it reaches 60
+        if (minutes >= 60) {
+            minutes = 0;
+        }
+    }
+
+    // Update timer every minute
+    setInterval(updateTimer, 60000); // 60000 milliseconds = 1 minute
+</script>
+
+<!--</div>-->
 </body>
 
 </html>

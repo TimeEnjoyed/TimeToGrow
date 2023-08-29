@@ -11,7 +11,7 @@ html, body {
 .container {
     display: flex;
     flex-direction: column-reverse;
-    min-height: 100vh;
+    min-height: 90vh;
     margin-top: auto;
 }
 
@@ -21,6 +21,8 @@ html, body {
     align-items: flex-end;
     flex-direction: row;
     width: 100%;
+    position: absolute;
+    bottom: 10px;
 }
 
 .plant {
@@ -44,4 +46,10 @@ html, body {
 
 img {
     width: 100%;
+}
+
+#timer {
+    position: absolute;
+    top: 50px;
+    left: 50px;
 }
